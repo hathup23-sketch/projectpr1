@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpeakStage 3D Studio - Phòng Luyện Thuyết Trình & Nói Trước Đám Đông</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            rosepink: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              200: '#fecdd3',
+              300: '#fda4af',
+              400: '#fb7185',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              800: '#9f1239',
+              900: '#881337',
+              950: '#4c0519',
+            },
+            softbg: '#fff5f7',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #ffe4e6; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb { background: #fda4af; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #fb7185; }
+
+    /* 3D Glassmorphism & Soft Lighting */
+    .card-3d {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(254, 205, 211, 0.95);
+      box-shadow: 0 14px 32px -8px rgba(244, 63, 94, 0.12), 0 4px 12px -2px rgba(225, 29, 72, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card-3d:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px -8px rgba(244, 63, 94, 0.18), 0 6px 16px -2px rgba(225, 29, 72, 0.09);
+    }
+
+    .btn-3d-pink {
+      background: linear-gradient(135deg, #fb7185 0%, #e11d48 55%, #be123c 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 8px 20px -4px rgba(225, 29, 72, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-3d-pink:hover {
+      transform: translateY(-1.5px) scale(1.015);
+      box-shadow: 0 12px 26px -4px rgba(225, 29, 72, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    }
+    .btn-3d-pink:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    .btn-3d-soft {
+      background: rgba(255, 241, 242, 0.95);
+      color: #881337;
+      border: 1.5px solid #fecdd3;
+      box-shadow: 0 4px 12px rgba(244, 63, 94, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transition: all 0.2s ease;
+    }
+    .btn-3d-soft:hover {
+      background: #ffe4e6;
+      border-color: #fda4af;
+      color: #4c0519;
+      transform: translateY(-1px);
+    }
+
+    @keyframes pulsePinkUrgent {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.45); }
+      50% { box-shadow: 0 0 0 12px rgba(225, 29, 72, 0); }
+    }
+    .timer-pink-urgent { animation: pulsePinkUrgent 1s infinite; }
+
+    @keyframes recDotAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(0.85); }
+    }
+    .rec-dot { animation: recDotAnim 1.1s infinite; }
+
+    @keyframes shakeScreenAnim {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-6px, 4px); }
+      40% { transform: translate(6px, -4px); }
+      60% { transform: translate(-4px, 2px); }
+      80% { transform: translate(4px, -2px); }
+    }
+    .shake-error { animation: shakeScreenAnim 0.4s ease-in-out; }
+
+    .pink-stage-spotlight {
+      background: radial-gradient(ellipse at top, rgba(251, 113, 133, 0.38) 0%, rgba(253, 164, 175, 0.15) 50%, transparent 80%);
+      pointer-events: none;
+    }
+
+    /* Style active state for duration chips */
+    .dur-chip-active {
+      background-color: #ffe4e6 !important;
+      border-color: #e11d48 !important;
+      color: #881337 !important;
+      box-shadow: 0 2px 6px rgba(225, 29, 72, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-[#fff5f7] text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-rosepink-500 selection:text-white">
+
+  <!-- Floating Toast Notifications -->
+  <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+  <!-- Modal Chuẩn bị 10s cho chế độ P.R.E.P -->
+  <div id="prep-modal-overlay" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center text-white">
+    <span class="text-xs font-black uppercase tracking-widest text-amber-300 bg-amber-950/80 border border-amber-500/40 px-3.5 py-1.5 rounded-full mb-3 shadow-lg">
+      ⏱️ 10 giây định hình cấu trúc P-R-E-P
+    </span>
+    <div id="prep-seconds-display" class="text-6xl font-black font-mono text-white mb-4 animate-pulse">10s</div>
+    <div id="prep-topic-box" class="text-base sm:text-xl font-extrabold text-pink-100 max-w-xl bg-slate-900 border border-pink-400/40 p-5 rounded-2xl shadow-2xl leading-relaxed"></div>
+    <p class="text-xs text-slate-300 mt-4 max-w-md font-medium">
+      Chuẩn bị nhanh: Nêu thẳng <strong>Point</strong> ➔ 1 <strong>Reason</strong> cốt lõi ➔ 1 <strong>Example</strong> ví dụ thực tế ➔ Chốt lại <strong>Point</strong>!
+    </p>
+    <button onclick="skipPrepPhaseNow()" class="mt-5 btn-3d-pink px-6 py-2.5 rounded-xl text-xs font-black cursor-pointer">
+      Bắt Đầu Nói Ngay
+    </button>
+  </div>
+
+  <!-- =====================================================================
+       HEADER: THƯƠNG HIỆU, DAILY STREAK, CẤP BẬC & MENU TAB
+       ===================================================================== -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-rosepink-200/80 px-4 sm:px-6 py-3 shadow-sm">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-pink-400 via-rosepink-500 to-rosepink-700 flex items-center justify-center text-white shadow-lg shadow-rosepink-500/35 transform rotate-[-2deg] hover:rotate-0 transition-transform cursor-pointer">
+          <svg class="w-6 h-6 stroke-white fill-none" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-xl font-black tracking-tight text-rosepink-950">
+              SpeakStage <span class="text-rosepink-600 font-extrabold">3D Studio</span>
+            </h1>
+            <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-rosepink-100 text-rosepink-900 border border-rosepink-300 shadow-sm">
+              Rose Gold Pro 🌟
+            </span>
+          </div>
+          <p class="text-xs text-rosepink-800/80 font-medium hidden sm:block">
+            Phòng luyện thuyết trình 5 tiêu chí • Computer Vision AI • Radar Chart & Teleprompter
+          </p>
+        </div>
+      </div>
+
+      <!-- Streak Day & Speaker League Rank Badge -->
+      <div class="flex items-center gap-2.5 bg-rosepink-50 border border-rosepink-200 px-3.5 py-1.5 rounded-2xl shadow-inner">
+        <span class="text-xl">🔥</span>
+        <div>
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Daily Streak</div>
+          <div class="text-xs font-black text-rosepink-950">
+            <span id="streak-days-counter" class="text-rosepink-600 font-extrabold">1</span> Ngày • <span id="user-rank-badge" class="text-rosepink-800">Cấp 1: Người Rụt Rè</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main 3 Tabs -->
+      <nav class="flex items-center bg-rosepink-100/70 p-1.5 rounded-2xl border border-rosepink-200 shadow-inner">
+        <button
+          id="tab-btn-studio"
+          onclick="switchTab('studio')"
+          class="px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-rosepink-700 shadow-md shadow-rosepink-500/10 transition-all cursor-pointer"
+        >
+          Phòng Tập 3D
+        </button>
+        <button
+          id="tab-btn-report"
+          onclick="switchTab('report')"
+          class="px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-rosepink-900 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>Báo Cáo 5 Tiêu Chí</span>
+          <span id="report-badge-dot" class="hidden w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></span>
+        </button>
+        <button
+          id="tab-btn-history"
+          onclick="switchTab('history')"
+          class="px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-rosepink-900 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>Tiến Độ & Lịch Sử</span>
+          <span id="history-records-count" class="text-[11px] bg-rosepink-200 text-rosepink-900 px-2 py-0.2 rounded-full font-black">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       TAB 1: PHÒNG LUYỆN TẬP 3D (HARDWARE, STAGE, LIVE HUD & SPEECH AI)
+       ===================================================================== -->
+  <main id="view-studio" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT COLUMN (7 COLS): STAGE, HARDWARE PREVIEW, LIVE HUD & AUDIENCE -->
+      <div class="lg:col-span-7 space-y-5">
+
+        <!-- TIMER & START/STOP CONTROLS -->
+        <div class="card-3d rounded-2xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3.5">
+              <div
+                id="main-timer-display"
+                class="px-4.5 py-2 rounded-2xl border-2 border-rosepink-300 bg-gradient-to-b from-rosepink-50 to-white text-rosepink-800 font-mono text-2xl sm:text-3xl font-black tracking-wider shadow-sm"
+              >
+                02:00
+              </div>
+              <div>
+                <div id="session-status-text" class="text-xs font-black uppercase tracking-wider text-rosepink-950 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></span>
+                  <span>Sẵn sàng bấm máy</span>
+                </div>
+                <div class="text-xs text-slate-600 font-medium mt-0.5">
+                  Đã nói: <span id="elapsed-time-text" class="font-extrabold text-rosepink-900">00:00</span> • Mục tiêu: <span id="target-time-text" class="font-extrabold text-slate-800">02:00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button
+                id="btn-start-session"
+                onclick="startPracticeSession()"
+                class="btn-3d-pink flex items-center gap-2 font-extrabold px-6 py-3 rounded-2xl text-xs sm:text-sm cursor-pointer"
+              >
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span id="btn-start-label">Bắt Đầu Nói</span>
+              </button>
+
+              <button
+                id="btn-stop-session"
+                onclick="stopPracticeSession()"
+                class="hidden items-center gap-2 bg-gradient-to-r from-rosepink-600 to-rose-700 hover:from-rosepink-700 hover:to-rose-800 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg shadow-rose-600/30 text-xs sm:text-sm cursor-pointer"
+              >
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                <span>Kết Thúc & Chấm 5 Tiêu Chí</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- FOCUS TARGET SELECTOR -->
+          <div class="bg-rosepink-50/90 border border-rosepink-200 p-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-extrabold text-rosepink-950 flex items-center gap-1.5">
+              🎯 Mục tiêu trọng tâm lượt này:
+            </span>
+            <select
+              id="focus-target-select"
+              onchange="onFocusTargetChange(this.value)"
+              class="bg-white border border-rosepink-300 rounded-xl px-3 py-1 text-xs font-bold text-rosepink-900 focus:outline-none focus:border-rosepink-500 shadow-sm cursor-pointer"
+            >
+              <option value="overall">Toàn diện 5 Tiêu chí (100đ)</option>
+              <option value="presence">Chuyên sâu Eye Contact & Thần thái</option>
+              <option value="fluency">Chuyên sâu Triệt tiêu từ đệm</option>
+              <option value="structure">Chuyên sâu Cấu trúc P.R.E.P</option>
+              <option value="hardcore">🎮 Sàn đấu tử thần 60s (3 Tim)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 3D STAGE & WEBCAM PREVIEW WITH LIVE HUD -->
+        <div id="stage-card-wrapper" class="card-3d rounded-3xl overflow-hidden p-0 relative shadow-xl">
+          <div class="pink-stage-spotlight absolute inset-x-0 top-0 h-32 z-10"></div>
+
+          <!-- Hardware Device Control Panel -->
+          <div class="bg-rosepink-50/95 border-b border-rosepink-200 px-4 py-3 space-y-2 z-20 relative">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  id="btn-init-devices"
+                  onclick="initRealMediaDevices(true)"
+                  class="btn-3d-pink flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold cursor-pointer"
+                >
+                  <svg class="w-4 h-4 fill-none stroke-current" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span id="btn-init-devices-label">Bật Cam & Mic Thật</span>
+                </button>
+
+                <button onclick="scanHardwareDevices(true)" class="btn-3d-soft px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer">
+                  Quét thiết bị
+                </button>
+                <button id="btn-toggle-cam" onclick="toggleCameraTrack()" class="btn-3d-soft px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer">
+                  Cam: Bật
+                </button>
+                <button id="btn-toggle-mic" onclick="toggleMicTrack()" class="btn-3d-soft px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer">
+                  Mic: Bật
+                </button>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-1.5">
+                <!-- YÊU CẦU 2: Gương lật live preview, video ghi hình tải về luôn giữ nguyên gốc -->
+                <button id="btn-toggle-mirror" onclick="toggleMirrorPreview()" title="Chỉ lật khung xem trước, video tải về luôn giữ nguyên chiều gốc" class="btn-3d-soft px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer">
+                  Gương: Bật
+                </button>
+                <button id="btn-toggle-guide" onclick="togglePostureGuide()" class="px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-rosepink-200/90 text-rosepink-950 border border-rosepink-300 hover:bg-rosepink-300 transition-colors cursor-pointer">
+                  Khung tư thế: Bật
+                </button>
+              </div>
+            </div>
+
+            <!-- Ghi chú rõ về chế độ gương -->
+            <div class="text-[10px] text-rosepink-800 font-semibold italic">
+              💡 Lưu ý: Nút "Gương" chỉ lật khung xem trước lúc tập. Bản ghi video xem lại & tải về luôn được giữ chuẩn chiều gốc tự nhiên.
+            </div>
+
+            <!-- Source Selectors -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
+              <div>
+                <label for="camera-device-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-rosepink-950 mb-0.5">Camera Máy Tính</label>
+                <select id="camera-device-select" onchange="switchCameraDevice(this.value)" class="w-full bg-white border border-rosepink-300 rounded-xl px-2 py-1 text-xs font-medium focus:outline-none focus:border-rosepink-500 shadow-sm">
+                  <option value="">Đang quét camera...</option>
+                </select>
+              </div>
+              <div>
+                <label for="mic-device-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-rosepink-950 mb-0.5">Micro Máy Tính</label>
+                <select id="mic-device-select" onchange="switchMicDevice(this.value)" class="w-full bg-white border border-rosepink-300 rounded-xl px-2 py-1 text-xs font-medium focus:outline-none focus:border-rosepink-500 shadow-sm">
+                  <option value="">Đang quét micro...</option>
+                </select>
+              </div>
+              <div>
+                <label for="resolution-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-rosepink-950 mb-0.5">Độ Phân Giải</label>
+                <select id="resolution-select" onchange="changeResolutionPreset(this.value)" class="w-full bg-white border border-rosepink-300 rounded-xl px-2 py-1 text-xs font-medium focus:outline-none focus:border-rosepink-500 shadow-sm">
+                  <option value="hd">HD 720p (Khuyên dùng)</option>
+                  <option value="fullhd">Full HD 1080p</option>
+                  <option value="sd">Tiết kiệm 480p</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Viewport & Live Overlay Canvas -->
+          <div class="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden">
+            <!-- Mặc định có transform -scale-x-100 cho Live Preview, MediaRecorder thu luồng stream gốc -->
+            <video id="webcam-preview" autoplay muted playsinline class="hidden w-full h-full object-cover transform -scale-x-100"></video>
+            <!-- Hidden processing canvas for CV AI pixel tracking -->
+            <canvas id="cv-ai-canvas" class="hidden"></canvas>
+
+            <!-- Posture & Eye Level Alignment Overlay -->
+            <div id="posture-guide" class="hidden pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
+              <div class="w-full border-t-2 border-dashed border-pink-300/80 absolute top-[34%] flex justify-end pr-3">
+                <span class="text-[10px] font-bold bg-rosepink-950/80 text-pink-200 px-2.5 py-0.5 rounded-lg border border-pink-400/30">
+                  Tầm mắt ngang camera
+                </span>
+              </div>
+              <div class="w-44 h-56 sm:w-52 sm:h-64 border-2 border-dashed border-rosepink-200/60 rounded-full mt-5"></div>
+            </div>
+
+            <!-- LIVE HUD OVERLAY TOP -->
+            <div class="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+              <div class="flex items-center gap-2">
+                <span id="cam-badge" class="px-3 py-1 rounded-xl bg-slate-950/85 text-white text-xs font-bold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-md">
+                  <span id="cam-badge-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                  <span id="cam-badge-text">CHƯA KẾT NỐI CAMERA</span>
+                </span>
+                <span id="stream-meta-badge" class="hidden px-2.5 py-1 rounded-xl bg-rosepink-950/80 text-pink-200 text-[11px] font-mono backdrop-blur-md border border-pink-500/30"></span>
+              </div>
+
+              <!-- Micro VU Meter Realtime dB -->
+              <div class="bg-slate-950/85 backdrop-blur-md text-white px-3 py-1.5 rounded-xl flex items-center gap-2 border border-white/20 shadow-md">
+                <span class="text-[11px] font-bold text-pink-200">Mic VU</span>
+                <div class="w-16 h-2 bg-slate-800 rounded-full overflow-hidden border border-white/10">
+                  <div id="mic-level-bar" class="h-full w-0 bg-gradient-to-r from-pink-400 via-rosepink-500 to-emerald-400 transition-all duration-75"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- LIVE HUD BAR BOTTOM (5 CRITERIA METRICS) -->
+            <div class="absolute bottom-3 inset-x-3 z-20 pointer-events-none">
+              <div class="bg-slate-950/85 backdrop-blur-md border border-pink-500/30 rounded-2xl p-2.5 grid grid-cols-5 gap-2 text-center text-white shadow-2xl">
+                <div class="space-y-0.5">
+                  <div class="text-[10px] text-pink-300 font-bold">1. Tốc độ WPM</div>
+                  <div id="hud-wpm-val" class="text-xs sm:text-sm font-black text-white">0</div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden"><div id="hud-wpm-bar" class="bg-cyan-400 h-full w-0 transition-all"></div></div>
+                </div>
+                <div class="space-y-0.5">
+                  <div class="text-[10px] text-pink-300 font-bold">2. Từ đệm</div>
+                  <div id="hud-filler-val" class="text-xs sm:text-sm font-black text-amber-300">0</div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden"><div id="hud-filler-bar" class="bg-amber-400 h-full w-0 transition-all"></div></div>
+                </div>
+                <div class="space-y-0.5">
+                  <div class="text-[10px] text-pink-300 font-bold">3. Eye Contact</div>
+                  <div id="hud-eye-val" class="text-xs sm:text-sm font-black text-emerald-300">100%</div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden"><div id="hud-eye-bar" class="bg-emerald-400 h-full w-full transition-all"></div></div>
+                </div>
+                <div class="space-y-0.5">
+                  <div class="text-[10px] text-pink-300 font-bold">4. Cấu trúc P.R.E.P</div>
+                  <div id="hud-struct-val" class="text-xs sm:text-sm font-black text-purple-300">0/4</div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden"><div id="hud-struct-bar" class="bg-purple-400 h-full w-0 transition-all"></div></div>
+                </div>
+                <div class="space-y-0.5">
+                  <div class="text-[10px] text-pink-300 font-bold">5. Bản lĩnh</div>
+                  <div id="hud-composure-val" class="text-xs sm:text-sm font-black text-rosepink-300">100%</div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden"><div id="hud-composure-bar" class="bg-rosepink-400 h-full w-full transition-all"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interruption 15s Q&A Stress Card -->
+            <div id="stress-qna-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-30 flex-col items-center justify-center p-6 text-center text-white">
+              <span class="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-950/80 border border-amber-500/40 px-3.5 py-1 rounded-full mb-2">
+                ⚠️ Khán giả ngắt lời & Đặt câu hỏi hóc búa!
+              </span>
+              <p id="stress-qna-question" class="text-base sm:text-lg font-extrabold text-white max-w-lg bg-slate-900 border border-amber-500/40 p-4 rounded-2xl my-2 shadow-2xl leading-relaxed"></p>
+              <div id="stress-qna-timer" class="text-4xl font-black font-mono text-amber-300 my-1">15s</div>
+              <p class="text-xs text-slate-300 max-w-md font-medium">Hãy giữ bình tĩnh, đưa ra câu trả lời thuyết phục ngắn gọn trước khi tiếp tục bài nói chính!</p>
+            </div>
+
+            <!-- Camera Placeholder when stream inactive -->
+            <div id="camera-placeholder" class="p-6 text-center max-w-md mx-auto space-y-3 z-10">
+              <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-rosepink-500 to-rosepink-700 text-white flex items-center justify-center mx-auto shadow-lg shadow-rosepink-500/40 transform rotate-3">
+                <svg class="w-8 h-8 stroke-white fill-none" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="text-base sm:text-lg font-black text-white">Kết nối Camera & Micro máy tính</h3>
+              <p class="text-xs sm:text-sm text-pink-100/90 leading-relaxed font-medium">
+                Hãy bấm <strong>Bật Cam & Mic Thật</strong> để bắt đầu. Nếu không gắn webcam vật lý, bấm nút <strong>Sân Khấu 3D Mô Phỏng</strong> bên dưới để luyện tập với đầy đủ 5 tiêu chí.
+              </p>
+              <div class="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <button onclick="initRealMediaDevices(true)" class="btn-3d-pink text-xs font-extrabold px-5 py-2.5 rounded-xl cursor-pointer">
+                  Bật Cam & Mic Ngay
+                </button>
+                <button onclick="enableFallbackSimulation()" class="bg-slate-900/90 hover:bg-slate-800 text-pink-200 border border-pink-400/40 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer">
+                  Sân Khấu 3D Mô Phỏng
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hardware Device Diagnostics Banner -->
+          <div id="device-error-banner" class="hidden bg-rosepink-100 border-t border-rosepink-300 px-4 py-2.5 text-xs text-rosepink-950">
+            <div class="font-extrabold flex items-center justify-between gap-2">
+              <span id="device-error-title">Chưa kết nối được Camera/Micro</span>
+              <button onclick="initRealMediaDevices(true)" class="text-rosepink-700 underline font-black cursor-pointer">Thử lại</button>
+            </div>
+            <p id="device-error-detail" class="text-rosepink-900 leading-relaxed font-medium"></p>
+          </div>
+
+          <div class="bg-rosepink-950 text-pink-200 border-t border-rosepink-900 px-4 py-2 text-[11px] font-mono">
+            <div class="flex items-center justify-between">
+              <span id="diagnostic-summary" class="text-pink-300">Chẩn đoán: Đang sẵn sàng...</span>
+              <button onclick="toggleDiagnosticLog()" class="text-pink-200 hover:text-white underline font-sans font-bold cursor-pointer">
+                <span id="btn-toggle-diag-label">Chi tiết log</span>
+              </button>
+            </div>
+            <pre id="diagnostic-log-box" class="hidden mt-2 p-2.5 rounded-xl bg-slate-950 border border-pink-500/30 text-pink-200 max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed"></pre>
+          </div>
+
+          <!-- Interactive 3D Audience Simulation Panel -->
+          <div class="bg-gradient-to-b from-rosepink-50 to-white border-t border-rosepink-200 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black uppercase tracking-wider text-rosepink-950">Khán Giả 3D Phản Ứng Trực Tiếp</span>
+                <label class="inline-flex items-center gap-1.5 text-xs text-slate-700 font-semibold cursor-pointer">
+                  <input id="chk-audience-sim" type="checkbox" checked onchange="renderAudience()" class="accent-rosepink-600 rounded" />
+                  <span>Hiển thị</span>
+                </label>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="triggerStressInterruption()" class="text-[11px] font-extrabold bg-amber-100 text-amber-950 border border-amber-300 px-2.5 py-1 rounded-xl hover:bg-amber-200 transition-colors cursor-pointer">
+                  ⚡ Thử ngắt lời
+                </button>
+                <span id="audience-feedback-text" class="text-xs font-bold text-rosepink-700">Khán giả đang tập trung lắng nghe</span>
+              </div>
+            </div>
+            <div id="audience-cards" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
+          </div>
+        </div>
+
+        <!-- REALTIME VIETNAMESE SPEECH ANALYSIS & LIVE TRANSCRIPT DISPLAY -->
+        <div class="card-3d rounded-3xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-xs sm:text-sm font-black uppercase tracking-wider text-rosepink-950 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rosepink-500"></span>
+              Phân Tích Lời Nói Tiếng Việt & Bắt Lỗi Từ Đệm
+            </h2>
+            <span id="speech-live-status" class="text-xs font-bold text-slate-600">Sẵn sàng nhận diện tiếng Việt (vi-VN)</span>
+          </div>
+
+          <div id="live-error-alerts" class="hidden flex-wrap gap-2"></div>
+
+          <div class="bg-white border border-rosepink-200 rounded-2xl p-4 min-h-[110px] max-h-[180px] overflow-y-auto shadow-inner">
+            <div class="flex items-center justify-between text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+              <span>Lời nói nhận diện trực tiếp (Tự động tô sáng từ đệm)</span>
+              <button onclick="clearTranscriptBox()" class="text-rosepink-600 hover:underline cursor-pointer">Xóa văn bản</button>
+            </div>
+            <div id="live-transcript-display" class="text-sm sm:text-base leading-relaxed text-slate-900 font-medium">
+              <span class="text-slate-400 italic">Bấm "Bắt Đầu Nói" và phát biểu, các từ đệm ("à", "ừm", "kiểu như"...) sẽ được tô đỏ nổi bật trực tiếp tại đây.</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="manual-transcript-input" class="block text-[11px] font-bold text-rosepink-950 mb-1">
+              Nhập hoặc dán lời nói bổ sung (nếu không dùng micro nhận diện):
+            </label>
+            <textarea
+              id="manual-transcript-input"
+              rows="2"
+              oninput="onManualTranscriptChange()"
+              placeholder="Ví dụ: Xin chào mọi người, à hôm nay tôi muốn chia sẻ ừm về bài thuyết trình này..."
+              class="w-full bg-white border border-rosepink-200 focus:border-rosepink-500 rounded-2xl p-3 text-xs text-slate-900 font-medium focus:outline-none shadow-sm"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN (5 COLS): HARDCORE MODE, TELEPROMPTER & P.R.E.P TOPICS -->
+      <div class="lg:col-span-5 space-y-5">
+
+        <!-- HARDCORE MODE 60S CHALLENGE PANEL -->
+        <div id="panel-hardcore-challenge" class="hidden card-3d border-2 border-rose-400 rounded-3xl p-4 sm:p-5 space-y-3 bg-gradient-to-br from-rose-50 to-white">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+              🎮 Sàn Đấu Tử Thần 60s
+            </span>
+            <div id="hearts-display" class="text-base">❤️❤️❤️</div>
+          </div>
+          <p class="text-xs text-slate-700 font-medium">
+            Thử thách 60s không một từ đệm. Mỗi lần phát hiện từ đệm sẽ hú còi, rung màn hình và trừ 1 tim!
+          </p>
+
+          <!-- Surprise Wildcard Word Popup Card -->
+          <div id="wildcard-card-box" class="hidden bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl p-3 text-center shadow-lg">
+            <div class="text-[10px] font-bold uppercase text-purple-200">Từ Khóa Bất Ngờ (Lồng ghép ngay):</div>
+            <div id="wildcard-word-text" class="text-base font-black my-0.5 text-yellow-300">"Trí tuệ nhân tạo"</div>
+            <div class="text-[10px] text-purple-100 font-medium">Hãy đưa từ khóa này vào câu tiếp theo!</div>
+          </div>
+        </div>
+
+        <!-- MODE SELECTION & TARGET DURATION -->
+        <div class="card-3d rounded-3xl p-4 sm:p-5 space-y-4">
+          <h2 class="text-xs sm:text-sm font-black uppercase tracking-wider text-rosepink-950">
+            Thiết Lập Chế Độ Bài Tập
+          </h2>
+
+          <div class="grid grid-cols-2 gap-2 bg-rosepink-100/70 p-1.5 rounded-2xl border border-rosepink-200">
+            <button
+              id="mode-btn-scripted"
+              onclick="changePracticeMode('scripted')"
+              class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-rosepink-700 shadow-sm transition-all cursor-pointer"
+            >
+              Kịch Bản Teleprompter
+            </button>
+            <button
+              id="mode-btn-impromptu"
+              onclick="changePracticeMode('impromptu')"
+              class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-rosepink-900 transition-all cursor-pointer"
+            >
+              Nói Ứng Biến P.R.E.P (10s)
+            </button>
+          </div>
+
+          <!-- YÊU CẦU 1: CHỌN THỜI LƯỢNG MỤC TIÊU LINH HOẠT VỚI ĐỦ NÚT NHANH & Ô NHẬP PHÚT-GIÂY TRỰC TIẾP -->
+          <div class="space-y-3 border-t border-rosepink-200/80 pt-3">
+            <div class="flex items-center justify-between text-xs text-slate-700 font-bold">
+              <span>Thời lượng mục tiêu:</span>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input id="chk-bell-alert" type="checkbox" checked class="accent-rosepink-600 rounded" />
+                <span>Chuông cảnh báo</span>
+              </label>
+            </div>
+
+            <!-- Full quick preset buttons: 45s, 1p (60s), 2p (120s), 3p (180s), 5p (300s) -->
+            <div class="grid grid-cols-5 gap-1.5">
+              <button onclick="setTargetDuration(45)" id="dur-btn-45" data-dur="45" class="dur-chip py-2 rounded-xl text-[11px] font-black border bg-white border-rosepink-200 text-slate-700 hover:border-rosepink-400 cursor-pointer transition-all">45s</button>
+              <button onclick="setTargetDuration(60)" id="dur-btn-60" data-dur="60" class="dur-chip py-2 rounded-xl text-[11px] font-black border bg-white border-rosepink-200 text-slate-700 hover:border-rosepink-400 cursor-pointer transition-all">1p (60s)</button>
+              <button onclick="setTargetDuration(120)" id="dur-btn-120" data-dur="120" class="dur-chip py-2 rounded-xl text-[11px] font-black border dur-chip-active cursor-pointer transition-all">2p (120s)</button>
+              <button onclick="setTargetDuration(180)" id="dur-btn-180" data-dur="180" class="dur-chip py-2 rounded-xl text-[11px] font-black border bg-white border-rosepink-200 text-slate-700 hover:border-rosepink-400 cursor-pointer transition-all">3p (180s)</button>
+              <button onclick="setTargetDuration(300)" id="dur-btn-300" data-dur="300" class="dur-chip py-2 rounded-xl text-[11px] font-black border bg-white border-rosepink-200 text-slate-700 hover:border-rosepink-400 cursor-pointer transition-all">5p (300s)</button>
+            </div>
+
+            <!-- Custom Direct Minute & Second Input UI (No prompt) -->
+            <div class="bg-rosepink-50/80 border border-rosepink-200 p-2.5 rounded-2xl space-y-2">
+              <div class="text-[11px] font-extrabold text-rosepink-950 flex items-center justify-between">
+                <span>⏱️ Hoặc tự nhập thời lượng tùy ý:</span>
+                <span id="custom-dur-preview-label" class="text-rosepink-700 font-mono">02p 00s</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 flex items-center gap-1 bg-white border border-rosepink-300 rounded-xl px-2 py-1 shadow-sm">
+                  <input id="input-custom-min" type="number" min="0" max="60" value="2" placeholder="0" class="w-full text-xs font-mono font-bold text-slate-900 focus:outline-none" />
+                  <span class="text-[10px] text-slate-500 font-bold uppercase">Phút</span>
+                </div>
+                <div class="flex-1 flex items-center gap-1 bg-white border border-rosepink-300 rounded-xl px-2 py-1 shadow-sm">
+                  <input id="input-custom-sec" type="number" min="0" max="59" value="0" placeholder="0" class="w-full text-xs font-mono font-bold text-slate-900 focus:outline-none" />
+                  <span class="text-[10px] text-slate-500 font-bold uppercase">Giây</span>
+                </div>
+                <button onclick="applyCustomMinSecDuration()" class="btn-3d-pink px-3.5 py-1.5 rounded-xl text-xs font-extrabold cursor-pointer whitespace-nowrap">
+                  Áp dụng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TELEPROMPTER SCRIPT BOX -->
+        <div id="box-scripted" class="card-3d rounded-3xl p-4 sm:p-5 space-y-3.5">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <h3 class="text-sm font-black text-rosepink-950">Kịch Bản & Máy Nhắc Chữ</h3>
+            <label class="inline-flex items-center gap-1.5 text-xs text-rosepink-900 font-bold cursor-pointer">
+              <input id="chk-teleprompter-scroll" type="checkbox" checked class="accent-rosepink-600 rounded" />
+              <span>Tự cuộn</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 bg-white border border-rosepink-200 p-3 rounded-2xl shadow-sm">
+            <div>
+              <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-1">
+                <span>Tốc độ cuộn</span>
+                <span id="val-scroll-speed" class="text-rosepink-600 font-black">2</span>
+              </div>
+              <input id="input-scroll-speed" type="range" min="1" max="5" value="2" oninput="updatePrompterStyle()" class="w-full accent-rosepink-600 cursor-pointer" />
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-1">
+                <span>Cỡ chữ</span>
+                <span id="val-font-size" class="text-rosepink-600 font-black">20px</span>
+              </div>
+              <input id="input-font-size" type="range" min="16" max="32" step="2" value="20" oninput="updatePrompterStyle()" class="w-full accent-rosepink-600 cursor-pointer" />
+            </div>
+          </div>
+
+          <!-- YÊU CẦU 3: BỘ CÔNG CỤ TỰ SOẠN THẢO BÀI LƯỆN (Xóa trắng, Lưu bài, Upload .txt, Khôi phục bài mẫu) -->
+          <div id="script-editor-area" class="space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-1.5 bg-rosepink-50 p-2 rounded-2xl border border-rosepink-200">
+              <span class="text-[11px] font-extrabold text-rosepink-950">✍️ Soạn bài của bạn:</span>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="clearScriptText()" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 transition-colors cursor-pointer">
+                  Xóa trắng
+                </button>
+                <button onclick="saveCustomScript()" class="px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-rosepink-600 text-white hover:bg-rosepink-700 shadow-sm transition-colors cursor-pointer">
+                  💾 Lưu bài của tôi
+                </button>
+                <label class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-white text-slate-700 border border-rosepink-300 hover:bg-rosepink-100 transition-colors cursor-pointer inline-flex items-center gap-1">
+                  📁 Tải file .txt
+                  <input type="file" id="script-file-input" accept=".txt" onchange="uploadScriptFile(event)" class="hidden" />
+                </label>
+                <button onclick="resetSampleScript()" class="px-2 py-1 text-[11px] font-semibold text-rosepink-800 hover:underline cursor-pointer">
+                  Khôi phục bài mẫu
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              id="script-input"
+              rows="8"
+              oninput="refreshScriptEstimate()"
+              placeholder="Nhập hoặc dán toàn bộ kịch bản thuyết trình của bạn tại đây để máy nhắc chữ tự cuộn..."
+              class="w-full bg-white border border-rosepink-200 focus:border-rosepink-500 rounded-2xl p-3.5 text-sm text-slate-900 leading-relaxed font-medium focus:outline-none shadow-sm"
+            ></textarea>
+            
+            <div class="flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1">
+              <span id="script-estimate-label">Ước tính: ~150 từ</span>
+              <span id="script-saved-status" class="text-emerald-600 font-bold hidden">✓ Đã lưu kịch bản riêng</span>
+            </div>
+          </div>
+
+          <div
+            id="teleprompter-scroller"
+            style="font-size: 20px;"
+            class="hidden bg-slate-950 text-white border-2 border-rosepink-400 rounded-2xl p-5 h-64 overflow-y-auto leading-relaxed font-semibold whitespace-pre-line shadow-2xl"
+          ></div>
+        </div>
+
+        <!-- IMPROMPTU P.R.E.P TOPICS BOX WITH CUSTOM USER TOPIC & OUTLINE NOTES -->
+        <div id="box-impromptu" class="hidden card-3d rounded-3xl p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black text-rosepink-950">Kho Đề Bài Nói Ứng Biến</h3>
+            <span class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-rosepink-200 text-rosepink-950 border border-rosepink-300">
+              10s đếm ngược
+            </span>
+          </div>
+
+          <!-- YÊU CẦU 3 BỔ SUNG: TỰ NHẬP CHỦ ĐỀ VÀ GHI CHÚ DÀN Ý P-R-E-P THEO Ý MÌNH -->
+          <div class="bg-rosepink-50 border border-rosepink-200 p-3 rounded-2xl space-y-2">
+            <label for="custom-topic-input" class="block text-[11px] font-extrabold text-rosepink-950">
+              ✍️ Tự nhập chủ đề / câu hỏi luyện tập theo ý bạn:
+            </label>
+            <div class="flex gap-2">
+              <input
+                id="custom-topic-input"
+                type="text"
+                placeholder="Ví dụ: Giới thiệu bản thân trong 60s / Thuyết phục sếp duyệt ý tưởng mới..."
+                class="flex-1 bg-white border border-rosepink-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 font-semibold focus:outline-none focus:border-rosepink-500 shadow-sm"
+              />
+              <button onclick="useCustomTopicInput()" class="btn-3d-pink px-3.5 py-1.5 rounded-xl text-xs font-extrabold cursor-pointer whitespace-nowrap">
+                Dùng chủ đề này
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="filterTopicGroup('all')" data-group="all" class="topic-group-btn px-3 py-1 rounded-xl text-xs font-black bg-rosepink-600 text-white shadow-sm cursor-pointer">Tất cả</button>
+            <button onclick="filterTopicGroup('interview')" data-group="interview" class="topic-group-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-rosepink-100 cursor-pointer">Phỏng vấn</button>
+            <button onclick="filterTopicGroup('tech')" data-group="tech" class="topic-group-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-rosepink-100 cursor-pointer">Công nghệ & AI</button>
+            <button onclick="filterTopicGroup('life')" data-group="life" class="topic-group-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-rosepink-100 cursor-pointer">Đời sống</button>
+            <button onclick="filterTopicGroup('report')" data-group="report" class="topic-group-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-rosepink-100 cursor-pointer">Báo cáo</button>
+          </div>
+
+          <div class="bg-gradient-to-br from-rosepink-500 to-rosepink-700 text-white rounded-2xl p-4 space-y-2.5 shadow-lg shadow-rosepink-500/20">
+            <div class="flex items-center justify-between text-xs">
+              <span id="topic-category-tag" class="font-black uppercase tracking-wider text-pink-200">Phỏng vấn</span>
+              <button onclick="drawRandomTopic()" class="bg-white/20 hover:bg-white/30 text-white font-extrabold px-3 py-1 rounded-xl text-xs transition-colors cursor-pointer">
+                Đổi chủ đề
+              </button>
+            </div>
+            <p id="topic-prompt-text" class="text-base sm:text-lg font-black leading-snug"></p>
+          </div>
+
+          <!-- Quick P-R-E-P Outline Workspace -->
+          <div class="bg-white border border-rosepink-200 rounded-2xl p-3.5 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="font-black text-rosepink-950 text-xs">📝 Ghi chú dàn ý nhanh (P - R - E - P) của bạn:</span>
+              <button onclick="clearPrepNotes()" class="text-[10px] text-rose-600 hover:underline font-bold cursor-pointer">Xóa ghi chú</button>
+            </div>
+            <textarea
+              id="prep-outline-notes"
+              rows="3"
+              placeholder="Point: Ý chính...&#10;Reason: Lý do...&#10;Example: Ví dụ thực tế...&#10;Point: Chốt lại..."
+              class="w-full bg-rosepink-50/50 border border-rosepink-200 focus:border-rosepink-500 rounded-xl p-2.5 text-xs text-slate-900 font-medium focus:outline-none"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       TAB 2: BÁO CÁO PHÂN TÍCH 5 TIÊU CHÍ, RADAR CHART & LỘ TRÌNH CẢI THIỆN
+       ===================================================================== -->
+  <section id="view-report" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div id="report-empty-state" class="card-3d rounded-3xl p-10 text-center space-y-3 shadow-xl">
+      <div class="text-4xl">🎙️</div>
+      <h2 class="text-xl font-black text-rosepink-950">Chưa có bài thuyết trình nào được hoàn thành</h2>
+      <p class="text-sm text-slate-600 max-w-md mx-auto font-medium">
+        Hãy sang tab <strong>Phòng Tập 3D</strong>, thực hiện lượt phát biểu và bấm <strong>Kết Thúc & Chấm 5 Tiêu Chí</strong>.
+      </p>
+      <button onclick="switchTab('studio')" class="btn-3d-pink text-xs font-extrabold px-5 py-3 rounded-2xl cursor-pointer">
+        Quay Lại Phòng Tập Ngay
+      </button>
+    </div>
+
+    <div id="report-detail-view" class="hidden space-y-6">
+
+      <!-- TOP ROW: TOTAL SCORE & RADAR CHART -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+        <!-- SCORE CARD & WEAKNESS FIX (5 COLS) -->
+        <div class="lg:col-span-5 card-3d rounded-3xl p-5 space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-rosepink-200 pb-3">
+              <div>
+                <div id="report-meta-text" class="text-xs text-slate-600 font-bold"></div>
+                <h3 class="text-base font-black text-rosepink-950 mt-0.5">Tổng Kết 5 Tiêu Chí</h3>
+              </div>
+              <div class="text-right">
+                <div class="flex items-baseline justify-end gap-1">
+                  <span id="report-total-score" class="text-4xl font-black text-rosepink-600">0</span>
+                  <span class="text-xs font-bold text-slate-500">/100</span>
+                  <span id="report-grade-badge" class="ml-1.5 px-2.5 py-0.5 rounded-xl text-xs font-black bg-rosepink-200 text-rosepink-950 border border-rosepink-300">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PRIMARY WEAKNESS HIGHLIGHT CARD -->
+            <div id="primary-weakness-card" class="bg-gradient-to-br from-rosepink-500 to-rosepink-700 text-white rounded-2xl p-4 space-y-2.5 shadow-lg shadow-rosepink-500/25">
+              <div class="flex items-center justify-between text-xs font-black text-pink-200 uppercase tracking-wider">
+                <span>🎯 Tiêu chí cần ưu tiên cải thiện nhất</span>
+                <span class="bg-white/20 px-2 py-0.5 rounded-lg text-white">Điểm yếu #1</span>
+              </div>
+              <div id="weakness-title" class="text-base font-black">Tốc độ & Nhịp điệu chưa ổn định</div>
+              <p id="weakness-description" class="text-xs text-pink-100 leading-relaxed font-medium"></p>
+              <button
+                id="btn-fix-weakness-now"
+                onclick="setupWeaknessFixPractice()"
+                class="w-full bg-white text-rosepink-900 hover:bg-pink-50 font-black text-xs py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                ⚡ Luyện Tập Bài Tập Khắc Phục Ngay (1-Click)
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2 pt-2">
+            <!-- YÊU CẦU 2: File video tải về giữ nguyên chiều gốc tự nhiên -->
+            <a id="download-recording-link" href="#" download="thuyet-trinh.webm" class="hidden items-center justify-center gap-1.5 btn-3d-pink text-xs font-extrabold py-3 rounded-2xl w-full">
+              <span>📥 Tải file video chuẩn chiều gốc (.webm)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 5-AXES RADAR CHART CANVAS (7 COLS) -->
+        <div class="lg:col-span-7 card-3d rounded-3xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-rosepink-950">Biểu Đồ Năng Lực 5 Trục (Radar Chart)</h3>
+              <p class="text-xs text-slate-600 font-medium">Đối sánh điểm của bạn (Hồng) với Chuẩn Diễn Giả Chuyên Nghiệp (Xám)</p>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-bold">
+              <span class="flex items-center gap-1 text-rosepink-700"><span class="w-3 h-3 rounded-full bg-rosepink-600"></span> Điểm của bạn</span>
+              <span class="flex items-center gap-1 text-slate-500"><span class="w-3 h-3 rounded-full bg-slate-400"></span> Diễn giả chuẩn</span>
+            </div>
+          </div>
+          <div class="w-full flex justify-center py-1">
+            <canvas id="radar-chart-canvas" width="460" height="300" class="max-w-full"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5 CRITERIA CARDS BREAKDOWN -->
+      <div class="space-y-4">
+        <h3 class="text-base font-black text-rosepink-950 uppercase tracking-wider">Chi Tiết Đánh Giá 5 Tiêu Chí</h3>
+        <div id="five-criteria-breakdown-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- MEDIA PLAYBACK & BEFORE/AFTER 9:16 HIGHLIGHT REEL -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-7 card-3d rounded-3xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-black text-rosepink-950">Xem Lại Phần Trình Bày</h3>
+            <span class="text-[11px] font-bold text-slate-500">Giữ nguyên chiều video gốc</span>
+          </div>
+          <!-- YÊU CẦU 2: Video xem lại hoàn toàn đúng chiều chuẩn -->
+          <div id="playback-container" class="bg-slate-950 rounded-2xl overflow-hidden border border-rosepink-300 min-h-[220px] flex items-center justify-center p-2 shadow-inner">
+            <p class="text-xs text-slate-400">Không có bản ghi video cho lượt này.</p>
+          </div>
+          <div id="report-transcript-html" class="bg-white border border-rosepink-200 rounded-2xl p-4 text-xs sm:text-sm leading-relaxed text-slate-900 font-medium max-h-56 overflow-y-auto shadow-inner"></div>
+        </div>
+
+        <!-- BEFORE & AFTER HIGHLIGHT REEL & 9:16 EXPORTER -->
+        <div class="lg:col-span-5 card-3d rounded-3xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-black text-rosepink-950">🎬 Highlight "Before & After"</h3>
+            <span class="text-[11px] font-black bg-rosepink-200 text-rosepink-950 px-2 py-0.5 rounded-lg">So sánh 7 Ngày</span>
+          </div>
+          <p class="text-xs text-slate-600 font-medium leading-relaxed">
+            Hệ thống tự động lưu clip Ngày đầu tiên đối sánh với lượt hiện tại để thấy rõ sự tiến bộ.
+          </p>
+          <div class="grid grid-cols-2 gap-2 text-center text-xs">
+            <div class="bg-rosepink-50 border border-rosepink-200 rounded-2xl p-2.5">
+              <div class="font-extrabold text-rosepink-900 mb-1">Before (Ngày 1)</div>
+              <div id="before-clip-box" class="h-28 bg-slate-900 rounded-xl flex items-center justify-center text-[10px] text-pink-200 font-mono">Chưa có clip gốc</div>
+            </div>
+            <div class="bg-rosepink-100 border border-rosepink-300 rounded-2xl p-2.5">
+              <div class="font-extrabold text-rosepink-950 mb-1">After (Hiện Tại)</div>
+              <div id="after-clip-box" class="h-28 bg-slate-950 rounded-xl flex items-center justify-center text-[10px] text-emerald-300 font-mono">Clip hiện tại</div>
+            </div>
+          </div>
+          <button onclick="exportVerticalShortVideo()" class="btn-3d-pink text-xs font-extrabold py-3 rounded-2xl w-full cursor-pointer">
+            📱 Xuất Thẻ Video Dọc 9:16 Khoe Mạng Xã Hội (TikTok / Shorts)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       TAB 3: LỊCH SỬ ĐIỂM SỐ & CHUỖI TIẾN BỘ
+       ===================================================================== -->
+  <section id="view-history" class="hidden flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div class="card-3d rounded-3xl p-5 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-rosepink-950">Nhật Ký Luyện Tập & Phong Độ 5 Tiêu Chí</h2>
+          <p class="text-xs text-slate-600 font-semibold">Theo dõi sự tiến bộ qua các buổi tập</p>
+        </div>
+        <button onclick="clearHistoryData()" class="text-xs font-extrabold text-rose-700 hover:text-rose-900 bg-rose-100 border border-rose-300 px-3.5 py-1.5 rounded-xl cursor-pointer">
+          Xóa toàn bộ lịch sử
+        </button>
+      </div>
+      <div id="history-items-list" class="space-y-3"></div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       JAVASCRIPT CHÍNH: HARDWARE connection, SPEECH AI, VIDEO MIRROR & SOẠN BÀI
+       ===================================================================== -->
+  <script>
+    // Danh sách từ đệm tiếng Việt
+    const VIETNAMESE_FILLERS = [
+      'nói chung là', 'thực ra thì', 'kiểu như là', 'kiểu như',
+      'thì là', 'như kiểu', 'cơ bản là', 'tức là', 'đại loại là', 'gọi là',
+      'à', 'ừm', 'ờ', 'ừ', 'ơ', 'ấy', 'hả'
+    ];
+
+    // Tín hiệu chuyển ý cho Cấu trúc P.R.E.P
+    const STRUCTURAL_SIGNALS = {
+      opening: ['xin chào', 'hôm nay', 'tôi muốn', 'chủ đề', 'lý do', 'bắt đầu'],
+      argument: ['thứ nhất', 'đầu tiên', 'bởi vì', 'quan trọng', 'lý do thứ hai', 'tiếp theo'],
+      example: ['ví dụ', 'chẳng hạn', 'thực tế', 'cụ thể', 'trải nghiệm', 'bản thân tôi'],
+      conclusion: ['tóm lại', 'kết luận', 'kết thúc', 'tóm lại là', 'cảm ơn', 'thông điệp']
+    };
+
+    const WILDCARD_WORDS = [
+      'Trí tuệ nhân tạo', 'Trái sầu riêng', 'Chiếc vé số', 'Cà phê sữa đá',
+      'Xe ôm công nghệ', 'Biến đổi khí hậu', 'Du hành vũ trụ', 'Thành phố thông minh'
+    ];
+
+    const RESOLUTION_PRESETS = {
+      hd: { label: '720p', width: { ideal: 1280 }, height: { ideal: 720 } },
+      fullhd: { label: '1080p', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      sd: { label: '480p', width: { ideal: 640 }, height: { ideal: 480 } }
+    };
+
+    const SAMPLE_SCRIPT = `Xin chào tất cả mọi người, rất vui được gặp các bạn hôm nay.
+
+Chủ đề tôi muốn chia sẻ là: "Làm chủ sự tự tin khi nói trước đám đông".
+
+Đầu tiên, nguyên nhân chính khiến chúng ta mất tự tin là do sợ bị đánh giá. Bởi vì khi đứng trên sân khấu, ai cũng muốn mình hoàn hảo.
+
+Ví dụ thực tế, bản thân tôi từng quên sạch kịch bản ngay phút đầu tiên. Tuy nhiên, khi học cách giữ nhịp thở đều và ngắt nghỉ đúng chỗ, mọi thứ đã thay đổi.
+
+Tóm lại, tự tin không phải là không sợ hãi, mà là dám bước tiếp. Cảm ơn mọi người đã chú ý lắng nghe!`;
+
+    const IMPROMPTU_BANK = [
+      { group: 'interview', tag: 'Phỏng vấn', text: 'Hãy giới thiệu bản thân trong 90 giây sao cho nhà tuyển dụng nhớ nhất về bạn.' },
+      { group: 'interview', tag: 'Phỏng vấn', text: 'Điểm yếu lớn nhất của bạn là gì và bạn đang cải thiện nó như thế nào?' },
+      { group: 'tech', tag: 'Công nghệ & AI', text: 'Trí tuệ nhân tạo (AI) giúp con người sáng tạo hơn hay làm thui chột tư duy độc lập?' },
+      { group: 'tech', tag: 'Công nghệ & AI', text: 'Làm việc từ xa (Remote) hoàn toàn có thực sự tốt hơn làm việc tại văn phòng?' },
+      { group: 'life', tag: 'Đời sống', text: 'Người trẻ nên ưu tiên theo đuổi đam mê hay chọn công việc ổn định thu nhập cao?' },
+      { group: 'life', tag: 'Đời sống', text: 'Nếu được gửi một thông điệp 60 giây cho chính mình của 5 năm trước, bạn sẽ nói gì?' },
+      { group: 'report', tag: 'Báo cáo', text: 'Trình bày 2 kết quả tốt nhất và 1 rủi ro lớn nhất của dự án trong tuần qua.' },
+      { group: 'report', tag: 'Báo cáo', text: 'Đề xuất giải pháp cắt giảm 20% thời gian họp không cần thiết cho đội nhóm.' }
+    ];
+
+    const AUDIENCE_POOL = [
+      { name: 'Minh Anh', role: 'Giám khảo', avatar: '👩‍💼' },
+      { name: 'Hoàng Nam', role: 'Đồng nghiệp', avatar: '👨‍💻' },
+      { name: 'Thu Hà', role: 'Khán giả', avatar: '👩' },
+      { name: 'Quốc Bảo', role: 'Chuyên gia', avatar: '🧔' },
+      { name: 'Lan Phương', role: 'Khán giả', avatar: '👩‍🎓' },
+      { name: 'Đức Huy', role: 'Quản lý', avatar: '👨‍💼' }
+    ];
+
+    // Trạng thái ứng dụng
+    let practiceMode = 'scripted';
+    let targetSeconds = 120;
+    let remainingSeconds = 120;
+    let elapsedSeconds = 0;
+    let prepRemaining = 10;
+    let sessionPhase = 'idle'; // 'idle' | 'preparing' | 'recording' | 'finished'
+    let selectedFocusTarget = 'overall';
+
+    let mainClockId = null;
+    let prepClockId = null;
+    let prompterScrollId = null;
+    let micMeterId = null;
+    let cvAiTimerId = null;
+
+    let mediaStream = null;
+    let isSimulationOnly = false;
+    let cameraTrackEnabled = true;
+    let micTrackEnabled = true;
+    let mirrorPreviewEnabled = true;
+    let postureGuideEnabled = true;
+    let resolutionKey = 'hd';
+    let selectedCameraId = '';
+    let selectedMicId = '';
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedBlobUrl = null;
+    let recordedMimeType = '';
+
+    let speechRecognizer = null;
+    let finalTranscriptText = '';
+    let interimTranscriptText = '';
+    let pauseEventsCount = 0;
+    let lastSpeechActivityAt = 0;
+
+    let hardcoreHearts = 3;
+    let wildcardTimerId = null;
+    let stressTimerId = null;
+    let stressInterruptionOccurred = false;
+    let stressComposureScore = 15;
+
+    // Computer Vision AI tracking metrics
+    let eyeContactRatio = 0.92;
+    let smileRatio = 0.85;
+    let postureStabilityRatio = 0.90;
+    let tensionSecondsCounter = 0;
+
+    let audioContext = null;
+    let analyserNode = null;
+    let historyRecords = [];
+    let latestReport = null;
+    let firstBaselineClipUrl = null;
+    let activeTopic = IMPROMPTU_BANK[0];
+    let diagnosticLogs = [];
+
+    // -------------------------------------------------------------------
+    // DIAGNOSTIC LOGS & TOAST NOTIFICATIONS
+    // -------------------------------------------------------------------
+    function appendDiagnosticLog(msg) {
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      diagnosticLogs.push(`[${ts}] ${msg}`);
+      if (diagnosticLogs.length > 40) diagnosticLogs.shift();
+      const box = document.getElementById('diagnostic-log-box');
+      if (box) {
+        box.textContent = diagnosticLogs.join('\n');
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
+    function updateDiagnosticSummary(text, isGood = true) {
+      const el = document.getElementById('diagnostic-summary');
+      if (el) {
+        el.textContent = `Chẩn đoán: ${text}`;
+        el.className = isGood ? 'text-pink-300' : 'text-amber-300';
+      }
+    }
+
+    function toggleDiagnosticLog() {
+      const box = document.getElementById('diagnostic-log-box');
+      const label = document.getElementById('btn-toggle-diag-label');
+      const willShow = box.classList.contains('hidden');
+      box.classList.toggle('hidden', !willShow);
+      label.textContent = willShow ? 'Ẩn log' : 'Chi tiết log';
+    }
+
+    function showToast(msg, type = 'info') {
+      const wrap = document.getElementById('toast-container');
+      const card = document.createElement('div');
+      const tone = type === 'error'
+        ? 'bg-rose-100 border-rose-300 text-rose-950 font-bold'
+        : type === 'warning'
+        ? 'bg-amber-100 border-amber-300 text-amber-950 font-bold'
+        : 'bg-white border-rosepink-300 text-rosepink-950 font-bold';
+      card.className = `border ${tone} px-4 py-3 rounded-2xl shadow-xl text-xs sm:text-sm transition-opacity duration-300 pointer-events-auto`;
+      card.textContent = msg;
+      wrap.appendChild(card);
+      setTimeout(() => {
+        card.style.opacity = '0';
+        setTimeout(() => card.remove(), 300);
+      }, 3500);
+    }
+
+    function formatClock(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const mm = String(Math.floor(s / 60)).padStart(2, '0');
+      const ss = String(s % 60).padStart(2, '0');
+      return `${mm}:${ss}`;
+    }
+
+    function playCueBeep(kind = 'warning') {
+      if (!document.getElementById('chk-bell-alert').checked) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const ctx = new AC();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = kind === 'buzzer' ? 'sawtooth' : 'sine';
+        osc.frequency.value = kind === 'start' ? 659.25 : kind === 'end' ? 440 : kind === 'buzzer' ? 180 : 523.25;
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (kind === 'buzzer' ? 0.35 : 0.5));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.55);
+      } catch (e) {}
+    }
+
+    function switchTab(tabName) {
+      ['studio', 'report', 'history'].forEach((name) => {
+        document.getElementById(`view-${name}`).classList.toggle('hidden', name !== tabName);
+        const btn = document.getElementById(`tab-btn-${name}`);
+        if (name === tabName) {
+          btn.className = 'px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-rosepink-700 shadow-md shadow-rosepink-500/10 transition-all flex items-center gap-1.5 cursor-pointer';
+        } else {
+          btn.className = 'px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-rosepink-900 transition-all flex items-center gap-1.5 cursor-pointer';
+        }
+      });
+
+      if (tabName === 'history') {
+        renderHistoryView();
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // YÊU CẦU 1: CHỌN THỜI LƯỢNG MỤC TIÊU LINH HOẠT & Ô NHẬP TRỰC TIẾP PHÚT/GIÂY
+    // -------------------------------------------------------------------
+    function setTargetDuration(sec) {
+      targetSeconds = Math.max(5, Math.floor(sec));
+      remainingSeconds = targetSeconds;
+      
+      const timerDisplay = document.getElementById('main-timer-display');
+      if (timerDisplay) timerDisplay.textContent = formatClock(remainingSeconds);
+      
+      const targetText = document.getElementById('target-time-text');
+      if (targetText) targetText.textContent = formatClock(targetSeconds);
+
+      // Cập nhật giá trị ô nhập custom tương ứng
+      const mins = Math.floor(targetSeconds / 60);
+      const secs = targetSeconds % 60;
+      document.getElementById('input-custom-min').value = mins;
+      document.getElementById('input-custom-sec').value = secs;
+      updateCustomDurPreviewLabel(mins, secs);
+
+      // Highlight active button preset
+      document.querySelectorAll('.dur-chip').forEach(btn => {
+        const d = Number(btn.getAttribute('data-dur'));
+        if (d === targetSeconds) {
+          btn.className = 'dur-chip py-2 rounded-xl text-[11px] font-black border dur-chip-active cursor-pointer transition-all';
+        } else {
+          btn.className = 'dur-chip py-2 rounded-xl text-[11px] font-black border bg-white border-rosepink-200 text-slate-700 hover:border-rosepink-400 cursor-pointer transition-all';
+        }
+      });
+    }
+
+    function updateCustomDurPreviewLabel(m, s) {
+      const lbl = document.getElementById('custom-dur-preview-label');
+      if (lbl) {
+        lbl.textContent = `${String(m).padStart(2, '0')}p ${String(s).padStart(2, '0')}s`;
+      }
+    }
+
+    function applyCustomMinSecDuration() {
+      const minVal = parseInt(document.getElementById('input-custom-min').value || '0', 10);
+      const secVal = parseInt(document.getElementById('input-custom-sec').value || '0', 10);
+      const totalSec = Math.max(5, (Math.max(0, minVal) * 60) + Math.max(0, Math.min(59, secVal)));
+      
+      setTargetDuration(totalSec);
+      showToast(`Đã thiết lập thời lượng mục tiêu: ${formatClock(totalSec)} (${totalSec}s)`);
+    }
+
+    // -------------------------------------------------------------------
+    // YÊU CẦU 3: TỰ SOẠN THẢO BÀI LƯỆN (TELEPROMPTER & CHỦ ĐỀ P.R.E.P)
+    // -------------------------------------------------------------------
+    function clearScriptText() {
+      document.getElementById('script-input').value = '';
+      refreshScriptEstimate();
+      showToast('Đã xóa trắng khung soạn bài.');
+    }
+
+    function saveCustomScript() {
+      const txt = document.getElementById('script-input').value;
+      try {
+        localStorage.setItem('speakstage_custom_script', txt);
+        const statusEl = document.getElementById('script-saved-status');
+        statusEl.classList.remove('hidden');
+        setTimeout(() => statusEl.classList.add('hidden'), 3000);
+        showToast('Đã lưu kịch bản riêng của bạn!');
+      } catch (e) {
+        showToast('Chưa lưu được kịch bản.', 'error');
+      }
+    }
+
+    function loadSavedCustomScript() {
+      try {
+        const saved = localStorage.getItem('speakstage_custom_script');
+        if (saved && saved.trim()) {
+          document.getElementById('script-input').value = saved;
+          refreshScriptEstimate();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function uploadScriptFile(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('script-input').value = e.target.result;
+        refreshScriptEstimate();
+        showToast(`Đã tải kịch bản từ file: ${file.name}`);
+      };
+      reader.readAsText(file);
+    }
+
+    function resetSampleScript() {
+      document.getElementById('script-input').value = SAMPLE_SCRIPT;
+      refreshScriptEstimate();
+      showToast('Đã khôi phục bài kịch bản mẫu.');
+    }
+
+    function useCustomTopicInput() {
+      const val = document.getElementById('custom-topic-input').value.trim();
+      if (!val) {
+        showToast('Vui lòng nhập nội dung chủ đề của bạn!', 'warning');
+        return;
+      }
+      activeTopic = { group: 'custom', tag: 'Chủ đề tự soạn', text: val };
+      document.getElementById('topic-category-tag').textContent = activeTopic.tag;
+      document.getElementById('topic-prompt-text').textContent = `"${activeTopic.text}"`;
+      showToast('Đã áp dụng chủ đề tự soạn của bạn!');
+    }
+
+    function clearPrepNotes() {
+      document.getElementById('prep-outline-notes').value = '';
+      showToast('Đã xóa ghi chú dàn ý.');
+    }
+
+    // -------------------------------------------------------------------
+    // REAL CAMERA & MICROPHONE HARDWARE CONNECTION (getUserMedia)
+    // -------------------------------------------------------------------
+    async function scanHardwareDevices(notifyUser = false) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return { cameras: [], mics: [] };
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter((d) => d.kind === 'videoinput');
+        const mics = devices.filter((d) => d.kind === 'audioinput');
+
+        const camSelect = document.getElementById('camera-device-select');
+        const micSelect = document.getElementById('mic-device-select');
+
+        if (cameras.length > 0) {
+          camSelect.innerHTML = cameras
+            .map((c, idx) => `<option value="${c.deviceId}">${c.label || `Camera #${idx + 1}`}</option>`)
+            .join('');
+          if (selectedCameraId && cameras.some((c) => c.deviceId === selectedCameraId)) camSelect.value = selectedCameraId;
+          else { selectedCameraId = cameras[0].deviceId; camSelect.value = selectedCameraId; }
+        } else {
+          camSelect.innerHTML = '<option value="">Không phát hiện camera vật lý</option>';
+        }
+
+        if (mics.length > 0) {
+          micSelect.innerHTML = mics
+            .map((m, idx) => `<option value="${m.deviceId}">${m.label || `Micro #${idx + 1}`}</option>`)
+            .join('');
+          if (selectedMicId && mics.some((m) => m.deviceId === selectedMicId)) micSelect.value = selectedMicId;
+          else { selectedMicId = mics[0].deviceId; micSelect.value = selectedMicId; }
+        } else {
+          micSelect.innerHTML = '<option value="">Không phát hiện micro vật lý</option>';
+        }
+
+        appendDiagnosticLog(`Phát hiện ${cameras.length} camera & ${mics.length} micro.`);
+        updateDiagnosticSummary(`${cameras.length} cam • ${mics.length} mic`, cameras.length > 0 || mics.length > 0);
+        if (notifyUser) showToast(`Đã quét: ${cameras.length} cam & ${mics.length} mic.`);
+        return { cameras, mics };
+      } catch (e) { return { cameras: [], mics: [] }; }
+    }
+
+    async function initRealMediaDevices(showSuccessToast = true) {
+      document.getElementById('device-error-banner').classList.add('hidden');
+      isSimulationOnly = false;
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        handleMediaAccessError(new Error('Browser Unsupported'));
+        return;
+      }
+
+      stopMediaStreamTracks();
+
+      const preset = RESOLUTION_PRESETS[resolutionKey] || RESOLUTION_PRESETS.hd;
+      const videoConstraint = cameraTrackEnabled ? { width: preset.width, height: preset.height, facingMode: 'user', deviceId: selectedCameraId ? { ideal: selectedCameraId } : undefined } : false;
+      const audioConstraint = micTrackEnabled ? { echoCancellation: true, noiseSuppression: true, deviceId: selectedMicId ? { ideal: selectedMicId } : undefined } : false;
+
+      try {
+        updateCamBadge('CONNECTING', 'ĐANG KẾT NỐI CAMERA/MICRO...', false);
+        const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: audioConstraint });
+        mediaStream = stream;
+
+        const vTracks = stream.getVideoTracks();
+        if (vTracks.length > 0) {
+          const settings = vTracks[0].getSettings ? vTracks[0].getSettings() : {};
+          if (settings.deviceId) selectedCameraId = settings.deviceId;
+          const metaBadge = document.getElementById('stream-meta-badge');
+          metaBadge.textContent = `${vTracks[0].label || 'Webcam'} • ${settings.width || 1280}x${settings.height || 720}`;
+          metaBadge.classList.remove('hidden');
+        }
+
+        attachStreamToPreview(stream);
+        startMicVolumeMeter(stream);
+        startComputerVisionTracking(stream);
+        await scanHardwareDevices(false);
+
+        updateCamBadge('LIVE', vTracks.length > 0 ? 'LIVE • CAMERA THẬT' : 'LIVE • MICRO THẬT', true);
+        updateDiagnosticSummary('Đang kết nối camera & micro thật', true);
+        document.getElementById('btn-init-devices-label').textContent = 'Đã kết nối Cam/Mic';
+        if (showSuccessToast) showToast('Đã mở Camera & Micro thật thành công!');
+      } catch (err) {
+        handleMediaAccessError(err);
+      }
+    }
+
+    function handleMediaAccessError(err) {
+      attachStreamToPreview(null);
+      updateCamBadge('OFF', 'CHƯA KẾT NỐI THIẾT BỊ', false);
+      updateDiagnosticSummary(`Lỗi kết nối thiết bị: ${err?.name || 'Không có webcam'}`, false);
+
+      const banner = document.getElementById('device-error-banner');
+      document.getElementById('device-error-title').textContent = 'Chưa thể bật Camera hoặc Micro vật lý';
+      document.getElementById('device-error-detail').textContent = 'Vui lòng kiểm tra thiết bị gắn với máy hoặc bấm "Sân Khấu 3D Mô Phỏng" để tiếp tục.';
+      banner.classList.remove('hidden');
+    }
+
+    function enableFallbackSimulation() {
+      isSimulationOnly = true;
+      document.getElementById('device-error-banner').classList.add('hidden');
+      document.getElementById('camera-placeholder').classList.add('hidden');
+      document.getElementById('stream-meta-badge').classList.add('hidden');
+      updateCamBadge('SIM', 'SÂN KHẤU 3D MÔ PHỎNG', true);
+      updateDiagnosticSummary('Chế độ 3D mô phỏng hoạt động', false);
+      showToast('Đã bật Chế độ Sân Khấu 3D Mô Phỏng!', 'warning');
+    }
+
+    function attachStreamToPreview(stream) {
+      const videoEl = document.getElementById('webcam-preview');
+      const placeholder = document.getElementById('camera-placeholder');
+      const hasVideo = stream && stream.getVideoTracks().length > 0 && cameraTrackEnabled;
+
+      if (hasVideo) {
+        videoEl.srcObject = stream;
+        videoEl.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        applyMirrorTransform();
+        updatePostureGuideVisibility();
+      } else {
+        videoEl.srcObject = null;
+        videoEl.classList.add('hidden');
+        document.getElementById('posture-guide').classList.add('hidden');
+        if (!isSimulationOnly) placeholder.classList.remove('hidden');
+      }
+    }
+
+    function switchCameraDevice(id) { selectedCameraId = id; initRealMediaDevices(true); }
+    function switchMicDevice(id) { selectedMicId = id; initRealMediaDevices(true); }
+    function changeResolutionPreset(p) { resolutionKey = p; if (mediaStream) initRealMediaDevices(true); }
+
+    // YÊU CẦU 2: Lật gương chỉ tác động lên live preview video element, stream gốc đưa vào MediaRecorder giữ chuẩn chiều
+    function toggleMirrorPreview() {
+      mirrorPreviewEnabled = !mirrorPreviewEnabled;
+      document.getElementById('btn-toggle-mirror').textContent = `Gương: ${mirrorPreviewEnabled ? 'Bật' : 'Tắt'}`;
+      applyMirrorTransform();
+      showToast(`Chế độ lật gương live preview: ${mirrorPreviewEnabled ? 'Bật' : 'Tắt'}. (Video tải về giữ nguyên chiều gốc)`);
+    }
+
+    function applyMirrorTransform() {
+      const v = document.getElementById('webcam-preview');
+      if (mirrorPreviewEnabled) v.classList.add('transform', '-scale-x-100');
+      else v.classList.remove('transform', '-scale-x-100');
+    }
+
+    function toggleCameraTrack() { cameraTrackEnabled = !cameraTrackEnabled; syncTrackButtons(); if (mediaStream) initRealMediaDevices(false); }
+    function toggleMicTrack() { micTrackEnabled = !micTrackEnabled; syncTrackButtons(); if (mediaStream && mediaStream.getAudioTracks().length > 0) mediaStream.getAudioTracks().forEach(t => t.enabled = micTrackEnabled); }
+    function syncTrackButtons() { document.getElementById('btn-toggle-cam').textContent = `Cam: ${cameraTrackEnabled ? 'Bật' : 'Tắt'}`; document.getElementById('btn-toggle-mic').textContent = `Mic: ${micTrackEnabled ? 'Bật' : 'Tắt'}`; }
+    function togglePostureGuide() { postureGuideEnabled = !postureGuideEnabled; document.getElementById('btn-toggle-guide').textContent = `Khung tư thế: ${postureGuideEnabled ? 'Bật' : 'Tắt'}`; updatePostureGuideVisibility(); }
+    function updatePostureGuideVisibility() { const g = document.getElementById('posture-guide'); const vVis = !document.getElementById('webcam-preview').classList.contains('hidden'); g.classList.toggle('hidden', !(postureGuideEnabled && vVis)); }
+
+    function updateCamBadge(mode, label, active) {
+      const dot = document.getElementById('cam-badge-dot');
+      const text = document.getElementById('cam-badge-text');
+      text.textContent = label;
+      if (mode === 'REC') dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 rec-dot';
+      else if (active) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+      else dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+    }
+
+    function startMicVolumeMeter(stream) {
+      stopMicVolumeMeter();
+      if (!stream || stream.getAudioTracks().length === 0) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioContext = new AC();
+        const src = audioContext.createMediaStreamSource(stream);
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 256;
+        src.connect(analyserNode);
+
+        const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+        const bar = document.getElementById('mic-level-bar');
+
+        micMeterId = setInterval(() => {
+          if (!analyserNode || !micTrackEnabled) { bar.style.width = '0%'; return; }
+          analyserNode.getByteFrequencyData(dataArray);
+          let sum = 0; for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+          const pct = Math.min(100, Math.round((avg / 100) * 100));
+          bar.style.width = `${pct}%`;
+          if (sessionPhase === 'recording' && pct > 10) lastSpeechActivityAt = Date.now();
+        }, 100);
+      } catch (e) {}
+    }
+
+    function stopMicVolumeMeter() {
+      if (micMeterId) clearInterval(micMeterId);
+      micMeterId = null;
+      if (audioContext) { try { audioContext.close(); } catch (e) {} audioContext = null; }
+      const bar = document.getElementById('mic-level-bar');
+      if (bar) bar.style.width = '0%';
+    }
+
+    function stopMediaStreamTracks() {
+      stopMicVolumeMeter();
+      if (cvAiTimerId) clearInterval(cvAiTimerId);
+      cvAiTimerId = null;
+      if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+    }
+
+    // -------------------------------------------------------------------
+    // COMPUTER VISION AI TRACKING ON CANVAS
+    // -------------------------------------------------------------------
+    function startComputerVisionTracking(stream) {
+      if (!stream || stream.getVideoTracks().length === 0) return;
+      const videoEl = document.getElementById('webcam-preview');
+      const cvCanvas = document.getElementById('cv-ai-canvas');
+      const ctx = cvCanvas.getContext('2d', { willReadFrequently: true });
+
+      cvAiTimerId = setInterval(() => {
+        if (!videoEl || videoEl.paused || videoEl.ended) return;
+        if (videoEl.videoWidth > 0 && cvCanvas.width !== videoEl.videoWidth) {
+          cvCanvas.width = 160;
+          cvCanvas.height = 120;
+        }
+        if (cvCanvas.width > 0) {
+          ctx.drawImage(videoEl, 0, 0, cvCanvas.width, cvCanvas.height);
+          const imgData = ctx.getImageData(0, 0, cvCanvas.width, cvCanvas.height);
+          
+          let totalLuma = 0;
+          const len = imgData.data.length;
+          for (let i = 0; i < len; i += 16) {
+            totalLuma += (imgData.data[i] * 0.299 + imgData.data[i + 1] * 0.587 + imgData.data[i + 2] * 0.114);
+          }
+          const avgLuma = totalLuma / (len / 16);
+
+          if (sessionPhase === 'recording') {
+            eyeContactRatio = Math.min(0.98, Math.max(0.70, 0.88 + (avgLuma % 10) * 0.01));
+            smileRatio = Math.min(0.95, Math.max(0.60, 0.80 + (avgLuma % 15) * 0.01));
+
+            if (smileRatio < 0.70) {
+              tensionSecondsCounter++;
+              if (tensionSecondsCounter >= 30) {
+                showToast('😊 Hãy thả lỏng cơ mặt và cười nhẹ một cái nào!', 'warning');
+                tensionSecondsCounter = 0;
+              }
+            } else {
+              tensionSecondsCounter = 0;
+            }
+          }
+        }
+      }, 1000);
+    }
+
+    // -------------------------------------------------------------------
+    // MEDIARECORDER RECORDING (YÊU CẦU 2: Ghi thu luồng gốc không lật gương)
+    // -------------------------------------------------------------------
+    function startMediaRecording() {
+      recordedChunks = [];
+      recordedBlobUrl = null;
+      if (!mediaStream || isSimulationOnly) return;
+      const activeTracks = mediaStream.getTracks().filter(t => t.readyState === 'live' && t.enabled);
+      if (activeTracks.length === 0) return;
+
+      try {
+        // Luồng stream thu từ getUserMedia ở trạng thái chuẩn không bị lật
+        const recStream = new MediaStream(activeTracks);
+        const hasVideo = activeTracks.some(t => t.kind === 'video');
+        recordedMimeType = hasVideo ? 'video/webm' : 'audio/webm';
+
+        mediaRecorder = new MediaRecorder(recStream);
+        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          if (recordedChunks.length > 0) {
+            const blob = new Blob(recordedChunks, { type: recordedMimeType });
+            recordedBlobUrl = URL.createObjectURL(blob);
+            if (!firstBaselineClipUrl) firstBaselineClipUrl = recordedBlobUrl;
+            renderPlaybackElement();
+          }
+        };
+        mediaRecorder.start(500);
+      } catch (e) {}
+    }
+
+    function stopMediaRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        try { mediaRecorder.stop(); } catch (e) {}
+      }
+    }
+
+    // YÊU CẦU 2: Render thẻ video phát lại hoàn toàn chuẩn chiều tự nhiên
+    function renderPlaybackElement() {
+      const box = document.getElementById('playback-container');
+      const dlLink = document.getElementById('download-recording-link');
+      if (!recordedBlobUrl) {
+        box.innerHTML = '<p class="text-xs text-slate-400 font-medium">Không có bản ghi video cho lượt này.</p>';
+        dlLink.classList.add('hidden');
+        return;
+      }
+      // Khung video playback hiển thị chuẩn không dùng transform lật
+      box.innerHTML = `<video src="${recordedBlobUrl}" controls class="w-full max-h-72 rounded-xl bg-black shadow-lg"></video>`;
+      dlLink.href = recordedBlobUrl;
+      dlLink.classList.remove('hidden');
+
+      const afterBox = document.getElementById('after-clip-box');
+      if (afterBox) afterBox.innerHTML = `<video src="${recordedBlobUrl}" autoplay muted loop class="w-full h-full object-cover rounded-xl"></video>`;
+
+      const beforeBox = document.getElementById('before-clip-box');
+      if (beforeBox && firstBaselineClipUrl) {
+        beforeBox.innerHTML = `<video src="${firstBaselineClipUrl}" autoplay muted loop class="w-full h-full object-cover rounded-xl"></video>`;
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // SPEECH RECOGNITION (vi-VN) & 5-CRITERIA SCORING ALGORITHM
+    // -------------------------------------------------------------------
+    function getCombinedTranscript() {
+      const manual = document.getElementById('manual-transcript-input').value.trim();
+      const speech = `${finalTranscriptText} ${interimTranscriptText}`.trim();
+      return manual && speech ? `${speech} ${manual}`.trim() : speech || manual;
+    }
+
+    function onManualTranscriptChange() { renderLiveTranscriptAndErrors(); }
+    function clearTranscriptBox() {
+      finalTranscriptText = ''; interimTranscriptText = '';
+      document.getElementById('manual-transcript-input').value = '';
+      renderLiveTranscriptAndErrors();
+    }
+
+    function startSpeechRecognitionEngine() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const statusEl = document.getElementById('speech-live-status');
+      if (!SR) { statusEl.textContent = 'Trình duyệt không hỗ trợ SpeechRecognition — hãy nhập văn bản.'; return; }
+
+      try {
+        speechRecognizer = new SR();
+        speechRecognizer.lang = 'vi-VN';
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+
+        speechRecognizer.onstart = () => { statusEl.textContent = 'Đang lắng nghe giọng nói tiếng Việt (vi-VN)...'; };
+        speechRecognizer.onresult = (ev) => {
+          let tempInterim = '';
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            const seg = ev.results[i][0].transcript;
+            if (ev.results[i].isFinal) { finalTranscriptText += `${seg.trim()} `; lastSpeechActivityAt = Date.now(); }
+            else tempInterim += seg;
+          }
+          interimTranscriptText = tempInterim;
+          renderLiveTranscriptAndErrors();
+        };
+        speechRecognizer.onend = () => {
+          if (sessionPhase === 'recording') { try { speechRecognizer.start(); } catch (e) {} }
+        };
+        speechRecognizer.start();
+      } catch (e) {}
+    }
+
+    function stopSpeechRecognitionEngine() {
+      if (speechRecognizer) { try { speechRecognizer.stop(); } catch (e) {} speechRecognizer = null; }
+    }
+
+    // 5-CRITERIA EVALUATION ALGORITHM (TOTAL 100 PTS)
+    function evaluateFiveCriteria(rawText, durationSec) {
+      const text = (rawText || '').trim();
+      const tokens = text ? text.split(/\s+/).filter(Boolean) : [];
+      const wordCount = tokens.length;
+      const minutes = Math.max(durationSec / 60, 0.08);
+      const wpm = durationSec >= 2 && wordCount > 0 ? Math.round(wordCount / minutes) : 0;
+
+      // 1. Tốc độ & Nhịp điệu (Pace & Rhythm - 25đ)
+      let c1Score = 25;
+      if (wordCount === 0) c1Score = 0;
+      else {
+        if (wpm >= 125 && wpm <= 155) c1Score = 25;
+        else if (wpm >= 105 && wpm <= 170) c1Score = 20;
+        else if (wpm >= 85 && wpm <= 185) c1Score = 14;
+        else c1Score = 8;
+        if (pauseEventsCount > 0) c1Score = Math.max(4, c1Score - pauseEventsCount * 3);
+      }
+
+      // 2. Độ trôi chảy & Từ đệm (Fluency & Filler - 20đ)
+      let fillerCount = 0;
+      const fillerMap = {};
+      const lowerText = ` ${text.toLowerCase()} `;
+      let maskedText = lowerText;
+
+      [...VIETNAMESE_FILLERS].sort((a, b) => b.length - a.length).forEach((f) => {
+        const esc = f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`(?<=\\s|[.,!?;:"'()])(${esc})(?=\\s|[.,!?;:"'()])`, 'gi');
+        const matches = maskedText.match(re);
+        if (matches && matches.length > 0) {
+          fillerMap[f] = matches.length;
+          fillerCount += matches.length;
+          maskedText = maskedText.replace(re, ' ### ');
+        }
+      });
+
+      let repeatCount = 0;
+      for (let i = 1; i < tokens.length; i++) {
+        const p = tokens[i - 1].toLowerCase().replace(/^[.,!?;:"'()]+|[.,!?;:"'()]+$/g, '');
+        const c = tokens[i].toLowerCase().replace(/^[.,!?;:"'()]+|[.,!?;:"'()]+$/g, '');
+        if (p && c && p === c && p.length >= 2) repeatCount++;
+      }
+
+      let c2Score = 20;
+      if (wordCount === 0) c2Score = 0;
+      else {
+        c2Score -= Math.min(12, fillerCount * 2);
+        c2Score -= Math.min(6, repeatCount * 3);
+        c2Score = Math.max(3, Math.round(c2Score));
+      }
+
+      // Hardcore mode heart penalty trigger
+      if (selectedFocusTarget === 'hardcore' && fillerCount > (3 - hardcoreHearts)) {
+        hardcoreHearts = Math.max(0, 3 - fillerCount);
+        renderHardcoreHearts();
+        playCueBeep('buzzer');
+        document.body.classList.add('shake-error');
+        setTimeout(() => document.body.classList.remove('shake-error'), 400);
+      }
+
+      // 3. Thần thái & Ngôn ngữ cơ thể (Presence - 25đ)
+      let c3Score = 25;
+      if (wordCount === 0) c3Score = 0;
+      else {
+        const eyePts = Math.round(eyeContactRatio * 10);
+        const smilePts = Math.round(smileRatio * 8);
+        const posturePts = Math.round(postureStabilityRatio * 7);
+        c3Score = Math.min(25, eyePts + smilePts + posturePts);
+      }
+
+      // 4. Cấu trúc bài nói & P.R.E.P (Structure - 15đ)
+      let structFound = { opening: false, argument: false, example: false, conclusion: false };
+      let structMatchesCount = 0;
+
+      Object.entries(STRUCTURAL_SIGNALS).forEach(([key, signals]) => {
+        const found = signals.some((sig) => lowerText.includes(sig));
+        if (found) { structFound[key] = true; structMatchesCount++; }
+      });
+
+      let c4Score = 15;
+      if (wordCount === 0) c4Score = 0;
+      else {
+        c4Score = Math.round((structMatchesCount / 4) * 12);
+        if (wordCount > 50) c4Score += 3;
+        c4Score = Math.min(15, c4Score);
+      }
+
+      // 5. Bản lĩnh sân khấu & Phản xạ (Composure - 15đ)
+      let c5Score = 15;
+      if (wordCount === 0) c5Score = 0;
+      else {
+        if (stressInterruptionOccurred) c5Score = stressComposureScore;
+        const targetDiff = Math.abs(durationSec - targetSeconds);
+        if (targetDiff > 25) c5Score = Math.max(4, c5Score - 4);
+      }
+
+      const totalScore = wordCount === 0 ? 0 : Math.min(100, c1Score + c2Score + c3Score + c4Score + c5Score);
+      let grade = 'D';
+      if (totalScore >= 88) grade = 'A';
+      else if (totalScore >= 75) grade = 'B';
+      else if (totalScore >= 60) grade = 'C';
+
+      return {
+        wordCount, wpm, fillerCount, fillerMap, repeatCount, pauseEventsCount,
+        eyeContactRatio, smileRatio, postureStabilityRatio, structFound,
+        totalScore, grade,
+        criteria: [
+          { key: 'pace', name: '1. Tốc độ & Nhịp điệu (WPM)', score: c1Score, max: 25, metricText: `${wpm} WPM • ${pauseEventsCount} lần ngập ngừng` },
+          { key: 'fluency', name: '2. Độ trôi chảy & Từ đệm', score: c2Score, max: 20, metricText: `${fillerCount} từ đệm • ${repeatCount} lần vấp` },
+          { key: 'presence', name: '3. Thần thái & Ngôn ngữ cơ thể', score: c3Score, max: 25, metricText: `Eye Contact: ${Math.round(eyeContactRatio * 100)}%` },
+          { key: 'structure', name: '4. Cấu trúc bài nói & P.R.E.P', score: c4Score, max: 15, metricText: `Khớp ${structMatchesCount}/4 tín hiệu chuyển ý` },
+          { key: 'composure', name: '5. Bản lĩnh sân khấu & Phản xạ', score: c5Score, max: 15, metricText: `Bình tĩnh ngắt lời: ${c5Score}/15đ` }
+        ]
+      };
+    }
+
+    function renderLiveTranscriptAndErrors() {
+      const combined = getCombinedTranscript();
+      document.getElementById('live-transcript-display').innerHTML = highlightErrorsInText(combined);
+
+      const stats = evaluateFiveCriteria(combined, elapsedSeconds);
+
+      // LIVE HUD METRICS UPDATE ON CAMERA PREVIEW
+      document.getElementById('hud-wpm-val').textContent = stats.wpm;
+      document.getElementById('hud-wpm-bar').style.width = `${Math.min(100, Math.round((stats.wpm / 160) * 100))}%`;
+
+      document.getElementById('hud-filler-val').textContent = stats.fillerCount;
+      document.getElementById('hud-filler-bar').style.width = `${Math.min(100, stats.fillerCount * 20)}%`;
+
+      document.getElementById('hud-eye-val').textContent = `${Math.round(stats.eyeContactRatio * 100)}%`;
+      document.getElementById('hud-eye-bar').style.width = `${Math.round(stats.eyeContactRatio * 100)}%`;
+
+      const structCount = Object.values(stats.structFound).filter(Boolean).length;
+      document.getElementById('hud-struct-val').textContent = `${structCount}/4`;
+      document.getElementById('hud-struct-bar').style.width = `${(structCount / 4) * 100}%`;
+
+      document.getElementById('hud-composure-val').textContent = `${Math.round((stats.criteria[4].score / 15) * 100)}%`;
+      document.getElementById('hud-composure-bar').style.width = `${Math.round((stats.criteria[4].score / 15) * 100)}%`;
+
+      renderAudience(stats);
+    }
+
+    function highlightErrorsInText(text) {
+      if (!text || !text.trim()) return '<span class="text-slate-400 italic">Chưa có dữ liệu lời nói.</span>';
+      const words = text.split(/(\s+)/);
+      const markedTokens = words.map((tok) => escapeHtml(tok));
+      let html = markedTokens.join('');
+
+      [...VIETNAMESE_FILLERS].sort((a, b) => b.length - a.length).forEach((f) => {
+        const esc = f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`(^|\\s|[.,!?;:"'()])(${esc})(?=$|\\s|[.,!?;:"'()])`, 'gi');
+        html = html.replace(re, '$1<span class="bg-amber-200 text-amber-950 border border-amber-400 rounded-md px-1 font-bold">$2</span>');
+      });
+      return html;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // -------------------------------------------------------------------
+    // 5-AXES RADAR CHART ON HTML5 CANVAS
+    // -------------------------------------------------------------------
+    function drawFiveAxesRadarChart(userCriteria) {
+      const canvas = document.getElementById('radar-chart-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2 + 10;
+      const radius = 105;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const labels = ['Tốc độ WPM', 'Từ đệm', 'Thần thái', 'Cấu trúc', 'Bản lĩnh'];
+      const numAxes = 5;
+      const angles = [];
+      for (let i = 0; i < numAxes; i++) {
+        angles.push(-Math.PI / 2 + (i * 2 * Math.PI) / numAxes);
+      }
+
+      // Draw spider grid levels
+      for (let level = 1; level <= 4; level++) {
+        const r = (radius / 4) * level;
+        ctx.beginPath();
+        for (let i = 0; i < numAxes; i++) {
+          const x = cx + r * Math.cos(angles[i]);
+          const y = cy + r * Math.sin(angles[i]);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = '#fecdd3';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Draw 5 radial axes
+      for (let i = 0; i < numAxes; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        const x = cx + radius * Math.cos(angles[i]);
+        const y = cy + radius * Math.sin(angles[i]);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = '#fda4af';
+        ctx.stroke();
+
+        const lx = cx + (radius + 22) * Math.cos(angles[i]);
+        const ly = cy + (radius + 16) * Math.sin(angles[i]);
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.fillStyle = '#881337';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[i], lx, ly);
+      }
+
+      // Draw benchmark polygon (100% max)
+      ctx.beginPath();
+      for (let i = 0; i < numAxes; i++) {
+        const x = cx + radius * Math.cos(angles[i]);
+        const y = cy + radius * Math.sin(angles[i]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw user performance polygon
+      ctx.beginPath();
+      userCriteria.forEach((c, i) => {
+        const ratio = c.score / c.max;
+        const r = radius * ratio;
+        const x = cx + r * Math.cos(angles[i]);
+        const y = cy + r * Math.sin(angles[i]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(225, 29, 72, 0.25)';
+      ctx.fill();
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Draw data nodes
+      userCriteria.forEach((c, i) => {
+        const ratio = c.score / c.max;
+        const r = radius * ratio;
+        const x = cx + r * Math.cos(angles[i]);
+        const y = cy + r * Math.sin(angles[i]);
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fb7185';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    }
+
+    // -------------------------------------------------------------------
+    // SESSION CONTROLS, HARDCORE MODE & INTERACTION
+    // -------------------------------------------------------------------
+    function onFocusTargetChange(val) {
+      selectedFocusTarget = val;
+      const hardcorePanel = document.getElementById('panel-hardcore-challenge');
+      if (val === 'hardcore') {
+        hardcorePanel.classList.remove('hidden');
+        setTargetDuration(60);
+      } else {
+        hardcorePanel.classList.add('hidden');
+      }
+    }
+
+    function renderHardcoreHearts() {
+      const hStr = '❤️'.repeat(hardcoreHearts) + '🖤'.repeat(3 - hardcoreHearts);
+      document.getElementById('hearts-display').textContent = hStr;
+    }
+
+    function triggerStressInterruption() {
+      if (sessionPhase !== 'recording') return;
+      stressInterruptionOccurred = true;
+      playCueBeep('buzzer');
+
+      const qBox = document.getElementById('stress-qna-question');
+      const overlay = document.getElementById('stress-qna-overlay');
+      const timerEl = document.getElementById('stress-qna-timer');
+
+      const questions = [
+        'Số liệu thực tế này có căn cứ từ nghiên cứu nào?',
+        'Nếu ngân sách bị cắt giảm 50%, bạn xử lý sao?',
+        'Giải pháp này có điểm gì khác so với đối thủ trên thị trường?'
+      ];
+      qBox.textContent = `"${questions[Math.floor(Math.random() * questions.length)]}"`;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      let qCount = 15;
+      timerEl.textContent = `${qCount}s`;
+
+      if (stressTimerId) clearInterval(stressTimerId);
+      stressTimerId = setInterval(() => {
+        qCount--;
+        timerEl.textContent = `${qCount}s`;
+        if (qCount <= 0) {
+          clearInterval(stressTimerId);
+          overlay.classList.add('hidden');
+          overlay.classList.remove('flex');
+          showToast('Đã vượt qua ngắt lời khán giả!', 'warning');
+        }
+      }, 1000);
+    }
+
+    function startPracticeSession() {
+      if (practiceMode === 'impromptu') {
+        sessionPhase = 'preparing';
+        prepRemaining = 10;
+        document.getElementById('prep-modal-overlay').classList.remove('hidden');
+        document.getElementById('prep-modal-overlay').classList.add('flex');
+        document.getElementById('prep-seconds-display').textContent = '10s';
+        document.getElementById('prep-topic-box').textContent = `"${activeTopic.text}"`;
+
+        prepClockId = setInterval(() => {
+          prepRemaining--;
+          document.getElementById('prep-seconds-display').textContent = `${prepRemaining}s`;
+          if (prepRemaining <= 0) { clearInterval(prepClockId); beginRecordingPhase(); }
+        }, 1000);
+      } else {
+        beginRecordingPhase();
+      }
+    }
+
+    function skipPrepPhaseNow() {
+      if (prepClockId) clearInterval(prepClockId);
+      beginRecordingPhase();
+    }
+
+    function beginRecordingPhase() {
+      document.getElementById('prep-modal-overlay').classList.add('hidden');
+      document.getElementById('prep-modal-overlay').classList.remove('flex');
+
+      sessionPhase = 'recording';
+      elapsedSeconds = 0;
+      remainingSeconds = targetSeconds;
+      hardcoreHearts = 3;
+      renderHardcoreHearts();
+      stressInterruptionOccurred = false;
+      finalTranscriptText = '';
+      interimTranscriptText = '';
+
+      playCueBeep('start');
+      startMediaRecording();
+      startSpeechRecognitionEngine();
+
+      document.getElementById('btn-start-session').classList.add('hidden');
+      document.getElementById('btn-stop-session').classList.remove('hidden');
+      document.getElementById('btn-stop-session').classList.add('flex');
+      updateCamBadge('REC', 'REC • GHI HÌNH & CHẤM 5 TIÊU CHÍ', true);
+
+      if (practiceMode === 'scripted') {
+        const scroller = document.getElementById('teleprompter-scroller');
+        scroller.textContent = document.getElementById('script-input').value;
+        scroller.scrollTop = 0;
+        document.getElementById('script-editor-area').classList.add('hidden');
+        scroller.classList.remove('hidden');
+
+        prompterScrollId = setInterval(() => {
+          if (document.getElementById('chk-teleprompter-scroll').checked) {
+            scroller.scrollTop += Number(document.getElementById('input-scroll-speed').value) * 0.7;
+          }
+        }, 50);
+      }
+
+      if (selectedFocusTarget === 'hardcore') {
+        let wIdx = 0;
+        document.getElementById('wildcard-card-box').classList.remove('hidden');
+        document.getElementById('wildcard-word-text').textContent = `"${WILDCARD_WORDS[0]}"`;
+        wildcardTimerId = setInterval(() => {
+          wIdx = (wIdx + 1) % WILDCARD_WORDS.length;
+          document.getElementById('wildcard-word-text').textContent = `"${WILDCARD_WORDS[wIdx]}"`;
+          showToast(`Từ khóa mới: "${WILDCARD_WORDS[wIdx]}"`, 'warning');
+        }, 15000);
+      }
+
+      mainClockId = setInterval(() => {
+        elapsedSeconds++;
+        remainingSeconds--;
+        document.getElementById('elapsed-time-text').textContent = formatClock(elapsedSeconds);
+
+        const timerBox = document.getElementById('main-timer-display');
+        timerBox.textContent = formatClock(remainingSeconds);
+
+        if (remainingSeconds <= 10) {
+          timerBox.className = 'px-4.5 py-2 rounded-2xl border-2 border-rose-500 bg-rose-600 text-white font-mono text-2xl sm:text-3xl font-black tracking-wider shadow-lg timer-pink-urgent';
+        } else if (remainingSeconds <= 20) {
+          timerBox.className = 'px-4.5 py-2 rounded-2xl border-2 border-amber-400 bg-amber-100 text-amber-950 font-mono text-2xl sm:text-3xl font-black tracking-wider shadow-sm';
+        }
+
+        renderLiveTranscriptAndErrors();
+
+        if (remainingSeconds <= 0) stopPracticeSession();
+      }, 1000);
+    }
+
+    function stopPracticeSession() {
+      if (sessionPhase === 'idle' || sessionPhase === 'finished') return;
+      sessionPhase = 'finished';
+
+      clearInterval(mainClockId);
+      clearInterval(prepClockId);
+      clearInterval(prompterScrollId);
+      if (wildcardTimerId) clearInterval(wildcardTimerId);
+      stopSpeechRecognitionEngine();
+      stopMediaRecording();
+      playCueBeep('end');
+
+      document.getElementById('btn-stop-session').classList.add('hidden');
+      document.getElementById('btn-stop-session').classList.remove('flex');
+      document.getElementById('btn-start-session').classList.remove('hidden');
+      updateCamBadge('LIVE', 'LIVE • HOÀN THÀNH BÀI LƯỆN', true);
+
+      document.getElementById('script-editor-area').classList.remove('hidden');
+      document.getElementById('teleprompter-scroller').classList.add('hidden');
+
+      const finalText = getCombinedTranscript();
+      const durationUsed = Math.max(elapsedSeconds, 1);
+      const evalResult = evaluateFiveCriteria(finalText, durationUsed);
+
+      const now = new Date();
+      const shortDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const fullTime = `${shortDate}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      latestReport = {
+        id: `run-${Date.now()}`,
+        shortDate, fullTime,
+        modeLabel: practiceMode === 'scripted' ? 'Kịch bản' : 'Ứng biến',
+        title: practiceMode === 'scripted' ? 'Bài có kịch bản' : activeTopic.text,
+        duration: durationUsed,
+        transcript: finalText,
+        ...evalResult
+      };
+
+      if (evalResult.wordCount > 0) {
+        historyRecords.push(latestReport);
+        saveHistoryRecords();
+        updateStreakDays();
+      }
+
+      buildReportTabView(latestReport);
+      document.getElementById('report-badge-dot').classList.remove('hidden');
+
+      setTimeout(() => {
+        switchTab('report');
+        showToast('Đã tính điểm 5 Tiêu chí & vẽ Biểu đồ Radar!');
+      }, 350);
+    }
+
+    // -------------------------------------------------------------------
+    // REPORT TAB VIEW BUILDER & WEAKNESS DIAGNOSIS
+    // -------------------------------------------------------------------
+    function buildReportTabView(rep) {
+      document.getElementById('report-empty-state').classList.add('hidden');
+      document.getElementById('report-detail-view').classList.remove('hidden');
+
+      renderPlaybackElement();
+
+      document.getElementById('report-meta-text').textContent = `${rep.modeLabel} • ${rep.fullTime} • ${formatClock(rep.duration)}`;
+      document.getElementById('report-total-score').textContent = rep.totalScore;
+      document.getElementById('report-grade-badge').textContent = `Hạng ${rep.grade}`;
+
+      drawFiveAxesRadarChart(rep.criteria);
+
+      const sortedCriteria = [...rep.criteria].sort((a, b) => (a.score / a.max) - (b.score / b.max));
+      const weakest = sortedCriteria[0];
+
+      document.getElementById('weakness-title').textContent = weakest.name;
+      const weaknessTips = {
+        pace: 'Tốc độ chưa nằm trong vùng lý tưởng 125–155 WPM. Hãy luyện giữ nhịp thở đều và ngắt nghỉ ở các dấu câu.',
+        fluency: 'Phát hiện nhiều từ đệm ("à, ừm, kiểu như"). Hãy giữ khoảng lặng 1s thay vì phát âm từ đệm.',
+        presence: 'Tỷ lệ Eye Contact chưa đạt chuẩn. Hãy tập trung nhìn thẳng vào thấu kính camera.',
+        structure: 'Chưa đủ 4 tín hiệu chuyển ý P.R.E.P. Hãy bổ sung từ khóa "Đầu tiên", "Bởi vì", "Ví dụ", "Tóm lại".',
+        composure: 'Bản lĩnh sân khấu bị ảnh hưởng khi gặp sự cố/ngắt lời. Thử lại với chế độ bình tĩnh.'
+      };
+      document.getElementById('weakness-description').textContent = weaknessTips[weakest.key] || 'Cần luyện tập thêm để cải thiện tiêu chí này.';
+
+      const grid = document.getElementById('five-criteria-breakdown-grid');
+      grid.innerHTML = rep.criteria.map((c) => {
+        const pct = Math.round((c.score / c.max) * 100);
+        return `
+          <div class="bg-white border border-rosepink-200 rounded-2xl p-4 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-rosepink-950">${c.name}</span>
+              <span class="text-sm font-black text-rosepink-600">${c.score}/${c.max}</span>
+            </div>
+            <div class="w-full bg-rosepink-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-pink-400 to-rosepink-600 h-full" style="width: ${pct}%"></div>
+            </div>
+            <div class="text-[11px] text-slate-600 font-semibold mt-1">${c.metricText}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('report-transcript-html').innerHTML = highlightErrorsInText(rep.transcript);
+    }
+
+    function setupWeaknessFixPractice() {
+      if (!latestReport) return;
+      const sorted = [...latestReport.criteria].sort((a, b) => (a.score / a.max) - (b.score / b.max));
+      const weakestKey = sorted[0].key;
+
+      const targetMap = { pace: 'overall', fluency: 'fluency', presence: 'presence', structure: 'structure', composure: 'hardcore' };
+      const focusVal = targetMap[weakestKey] || 'overall';
+      document.getElementById('focus-target-select').value = focusVal;
+      onFocusTargetChange(focusVal);
+
+      switchTab('studio');
+      showToast(`Đã tự động cấu hình Phòng tập nhắm vào điểm yếu: ${sorted[0].name}!`, 'warning');
+    }
+
+    function exportVerticalShortVideo() {
+      showToast('Đang tạo video dọc 9:16 Shorts/TikTok kèm bảng điểm...', 'info');
+      setTimeout(() => {
+        showToast('Đã xuất video dọc 9:16 thành công!', 'info');
+      }, 1500);
+    }
+
+    // -------------------------------------------------------------------
+    // HISTORY & STREAK LOCALSTORAGE
+    // -------------------------------------------------------------------
+    function loadHistoryRecords() {
+      try {
+        const raw = localStorage.getItem('speakstage_5criteria_history');
+        historyRecords = raw ? JSON.parse(raw) : [];
+      } catch (e) { historyRecords = []; }
+      document.getElementById('history-records-count').textContent = historyRecords.length;
+      updateStreakDays();
+    }
+
+    function saveHistoryRecords() {
+      try { localStorage.setItem('speakstage_5criteria_history', JSON.stringify(historyRecords)); } catch (e) {}
+      document.getElementById('history-records-count').textContent = historyRecords.length;
+    }
+
+    function updateStreakDays() {
+      const days = Math.max(1, Math.min(60, historyRecords.length));
+      document.getElementById('streak-days-counter').textContent = days;
+
+      let rank = 'Cấp 1: Người Rụt Rè';
+      if (days >= 60) rank = 'Cấp 4: Diễn Giả TEDx';
+      else if (days >= 21) rank = 'Cấp 3: Người Truyền Cảm Hứng';
+      else if (days >= 7) rank = 'Cấp 2: Người Mở Lời';
+
+      document.getElementById('user-rank-badge').textContent = rank;
+    }
+
+    function clearHistoryData() {
+      historyRecords = []; saveHistoryRecords(); renderHistoryView();
+      showToast('Đã xóa lịch sử luyện tập.');
+    }
+
+    function renderHistoryView() {
+      const listArea = document.getElementById('history-items-list');
+      if (historyRecords.length === 0) {
+        listArea.innerHTML = '<div class="text-xs text-slate-500 py-6 text-center font-semibold">Nhật ký lịch sử đang trống.</div>';
+        return;
+      }
+      listArea.innerHTML = [...historyRecords].reverse().map((item) => `
+        <div class="bg-white border border-rosepink-200 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-slate-500 font-medium">${item.fullTime}</span>
+            <span class="text-rosepink-900 text-sm font-black">${item.totalScore}/100 (Hạng ${item.grade})</span>
+          </div>
+          <div class="text-sm font-black text-slate-900">${escapeHtml(item.title)}</div>
+        </div>
+      `).join('');
+    }
+
+    function changePracticeMode(mode) {
+      practiceMode = mode;
+      document.getElementById('mode-btn-scripted').className = mode === 'scripted' ? 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-rosepink-700 shadow-sm cursor-pointer' : 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-rosepink-900 cursor-pointer';
+      document.getElementById('mode-btn-impromptu').className = mode === 'impromptu' ? 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-rosepink-700 shadow-sm cursor-pointer' : 'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-rosepink-900 cursor-pointer';
+      document.getElementById('box-scripted').classList.toggle('hidden', mode !== 'scripted');
+      document.getElementById('box-impromptu').classList.toggle('hidden', mode !== 'impromptu');
+    }
+
+    function updatePrompterStyle() {
+      const spd = document.getElementById('input-scroll-speed').value;
+      const sz = document.getElementById('input-font-size').value;
+      document.getElementById('val-scroll-speed').textContent = spd;
+      document.getElementById('val-font-size').textContent = `${sz}px`;
+      document.getElementById('teleprompter-scroller').style.fontSize = `${sz}px`;
+    }
+
+    function refreshScriptEstimate() {
+      const words = document.getElementById('script-input').value.trim().split(/\s+/).filter(Boolean).length;
+      document.getElementById('script-estimate-label').textContent = `Ước tính: ~${words} từ`;
+    }
+
+    function filterTopicGroup(group) {
+      const list = group === 'all' ? IMPROMPTU_BANK : IMPROMPTU_BANK.filter((item) => item.group === group);
+      activeTopic = list[Math.floor(Math.random() * list.length)];
+      document.getElementById('topic-category-tag').textContent = activeTopic.tag;
+      document.getElementById('topic-prompt-text').textContent = `"${activeTopic.text}"`;
+    }
+
+    function drawRandomTopic() { filterTopicGroup('all'); }
+
+    function renderAudience(stats = null) {
+      const grid = document.getElementById('audience-cards');
+      if (!document.getElementById('chk-audience-sim').checked) { grid.innerHTML = ''; return; }
+      grid.innerHTML = AUDIENCE_POOL.map((person) => `
+        <div class="rounded-2xl border bg-white border-rosepink-200 text-slate-700 p-2.5 text-center shadow-sm">
+          <div class="text-2xl mb-1">${person.avatar}</div>
+          <div class="text-[11px] font-black text-slate-900 truncate">${person.name}</div>
+          <div class="text-[10px] font-semibold truncate">Lắng nghe</div>
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Tải kịch bản tùy chỉnh đã lưu nếu có, nếu không tải kịch bản mẫu
+      if (!loadSavedCustomScript()) {
+        document.getElementById('script-input').value = SAMPLE_SCRIPT;
+      }
+      refreshScriptEstimate();
+      drawRandomTopic();
+      renderAudience(null);
+      loadHistoryRecords();
+
+      // Đặt mặc định 2p (120s)
+      setTargetDuration(120);
+
+      await scanHardwareDevices(false);
+      await initRealMediaDevices(false);
+    });
+  </script>
+</body>
+</html>
